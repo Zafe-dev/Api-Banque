@@ -19,10 +19,15 @@ fi
 # Lancer les migrations si la BDD est dispo
 php artisan migrate --force || true
 
-# Générer les clés Passport AVANT tout le reste
-echo "🔐 Génération des clés Passport..."
+# Générer les clés Passport AVANT tout le reste (seulement si elles n'existent pas)
+echo "🔐 Vérification des clés Passport..."
 mkdir -p storage
-php artisan passport:keys --force || true
+if [ ! -f storage/oauth-private.key ] || [ ! -f storage/oauth-public.key ]; then
+    echo "🔐 Génération des clés Passport..."
+    php artisan passport:keys --force || true
+else
+    echo "✅ Clés Passport déjà présentes"
+fi
 
 # Donner toutes les permissions sur le répertoire storage
 chmod -R 777 storage
