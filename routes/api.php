@@ -87,25 +87,28 @@ Route::prefix('v1')->group(function () {
         });
 
         // Routes des comptes (avec rate limiting et contrôle d'accès)
-        Route::middleware(['throttle:60,1', 'role:admin,client'])->prefix('comptes')->group(function () {
+        Route::middleware(['throttle:60,1'])->prefix('comptes')->group(function () {
 
             // Route de test sans auth pour debug
             Route::get('/test', function () {
                 return response()->json(['message' => 'Route de test accessible']);
             });
 
-            // Liste et détails
-            Route::get('/', [App\Http\Controllers\CompteController::class, 'index']);
-            Route::get('/{compte}', [App\Http\Controllers\CompteController::class, 'show']);
+            // Routes avec auth
+            Route::middleware(['role:admin,client'])->group(function () {
+                // Liste et détails
+                Route::get('/', [App\Http\Controllers\CompteController::class, 'index']);
+                Route::get('/{compte}', [App\Http\Controllers\CompteController::class, 'show']);
 
-            // CRUD (admin only - à vérifier dans le controller)
-            Route::post('/', [App\Http\Controllers\CompteController::class, 'store']);
-            Route::patch('/{compte}', [App\Http\Controllers\CompteController::class, 'update']);
-            Route::delete('/{compte}', [App\Http\Controllers\CompteController::class, 'destroy']);
+                // CRUD (admin only - à vérifier dans le controller)
+                Route::post('/', [App\Http\Controllers\CompteController::class, 'store']);
+                Route::patch('/{compte}', [App\Http\Controllers\CompteController::class, 'update']);
+                Route::delete('/{compte}', [App\Http\Controllers\CompteController::class, 'destroy']);
 
-            // Actions spéciales
-            Route::post('/{compte}/bloquer', [App\Http\Controllers\CompteController::class, 'bloquer']);
-            Route::post('/{compte}/debloquer', [App\Http\Controllers\CompteController::class, 'debloquer']);
+                // Actions spéciales
+                Route::post('/{compte}/bloquer', [App\Http\Controllers\CompteController::class, 'bloquer']);
+                Route::post('/{compte}/debloquer', [App\Http\Controllers\CompteController::class, 'debloquer']);
+            });
         });
     });
 });
