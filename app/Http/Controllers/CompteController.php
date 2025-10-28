@@ -178,7 +178,10 @@ class CompteController extends Controller
                 'error' => [
                     'code' => 'INTERNAL_ERROR',
                     'message' => 'Une erreur interne s\'est produite',
-                    'details' => $e->getMessage()
+                    'details' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString()
                 ]
             ], 500);
         }
