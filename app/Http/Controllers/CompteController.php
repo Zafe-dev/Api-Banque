@@ -181,7 +181,7 @@ class CompteController extends Controller
                     'details' => $e->getMessage(),
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => explode("\n", $e->getTraceAsString())[0] // Only first line for brevity
                 ]
             ], 500);
         }
