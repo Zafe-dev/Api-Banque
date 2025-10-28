@@ -44,9 +44,16 @@ fi
 # Passport est maintenant géré via les variables d'environnement dans AppServiceProvider
 echo "🔐 Passport configuré via variables d'environnement"
 
-# Lancer les seeders pour peupler la base de données
-echo "🌱 Exécution des seeders..."
-php artisan db:seed --force || true
+# Vérifier si la base a déjà été seedée (une seule fois)
+if [ ! -f /data/seeded.flag ]; then
+    echo "🌱 Exécution des seeders (première fois)..."
+    php artisan db:seed --force || true
+    mkdir -p /data
+    touch /data/seeded.flag
+    echo "✅ Base de données seedée et flag créé"
+else
+    echo "✅ Base de données déjà seedée, passage..."
+fi
 
 # Générer la documentation Swagger AVANT les caches
 echo "📚 Génération de la documentation Swagger..."
