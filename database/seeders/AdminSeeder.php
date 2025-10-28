@@ -19,7 +19,7 @@ class AdminSeeder extends Seeder
         ], [
             'name' => 'Administrateur',
             'email' => 'admin@banque.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('admin123'),
             'role' => 'admin',
         ]);
 
@@ -28,7 +28,7 @@ class AdminSeeder extends Seeder
         ], [
             'name' => 'Administrateur 1',
             'email' => 'admin1@banque.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('admin123'),
             'role' => 'admin',
         ]);
     }

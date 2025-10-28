@@ -45,7 +45,7 @@ Route::prefix('v1')->group(function () {
         try {
             DB::connection()->getPdo();
             $health['database'] = 'connected ✓';
-            
+
             // Compteurs
             $health['counts'] = [
                 'admins' => \App\Models\Admin::count(),
@@ -68,10 +68,22 @@ Route::prefix('v1')->group(function () {
     });
 
     /**
+     * Route de bienvenue avec logging
+     * Test: GET /api/v1/welcome
+     */
+    Route::get('/welcome', [App\Http\Controllers\WelcomeController::class, 'welcome']);
+
+    /**
      * Route de connexion
      * Test: POST /api/v1/auth/login
      */
     Route::post('/auth/login', [App\Http\Controllers\AuthController::class, 'login']);
+
+    /**
+     * Route d'inscription
+     * Test: POST /api/v1/auth/register
+     */
+    Route::post('/auth/register', [App\Http\Controllers\AuthController::class, 'register']);
 
     // Route de test publique pour debug
     Route::get('/comptes/test', function () {

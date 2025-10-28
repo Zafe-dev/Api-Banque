@@ -197,4 +197,89 @@ class AuthController extends Controller
             'message' => 'Déconnexion réussie'
         ]);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/register",
+     *     tags={"Authentification"},
+     *     summary="Inscription utilisateur",
+     *     description="Inscription d'un nouveau client",
+     * @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             required={"email", "password", "titulaire", "telephone"},
+     *             @OA\Property(property="email", type="string", format="email", example="client@banque.com"),
+     *             @OA\Property(property="password", type="string", example="password123"),
+     *             @OA\Property(property="titulaire", type="string", example="John Doe"),
+     *             @OA\Property(property="telephone", type="string", example="0123456789")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Inscription réussie",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Inscription réussie"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="user",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="string"),
+     *                     @OA\Property(property="email", type="string"),
+     *                     @OA\Property(property="titulaire", type="string"),
+     *                     @OA\Property(property="telephone", type="string")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreur de validation",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Les données fournies sont invalides")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function register(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email|unique:clients,email',
+            'password' => 'required|min:8',
+            'titulaire' => 'required|string|max:255',
+            'telephone' => 'required|string|max:20',
+        ]);
+
+        $client = Client::create([
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'titulaire' => $request->titulaire,
+            'telephone' => $request->telephone,
+            'code' => rand(100000, 999999),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Inscription réussie',
+            'data' => [
+                'user' => [
+                    'id' => $client->id,
+                    'email' => $client->email,
+                    'titulaire' => $client->titulaire,
+                    'telephone' => $client->telephone,
+                ]
+            ]
+        ], 201);
+    }
 }
