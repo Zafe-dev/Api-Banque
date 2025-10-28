@@ -34,5 +34,10 @@ class AuthServiceProvider extends ServiceProvider
         Passport::useTokenModel(\Laravel\Passport\Token::class);
         Passport::useAuthCodeModel(\Laravel\Passport\AuthCode::class);
         Passport::usePersonalAccessClientModel(\Laravel\Passport\PersonalAccessClient::class);
+
+        // Enregistrer le provider personnalisé
+        \Illuminate\Support\Facades\Auth::provider('api_users', function ($app, array $config) {
+            return new \App\Providers\ApiUserProvider();
+        });
     }
 }

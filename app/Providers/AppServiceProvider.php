@@ -21,6 +21,11 @@ class AppServiceProvider extends ServiceProvider
     {
         \Laravel\Passport\Passport::ignoreRoutes();
 
+        // Enregistrer le provider personnalisé
+        \Illuminate\Support\Facades\Auth::provider('api_users', function ($app, array $config) {
+            return new \App\Providers\ApiUserProvider();
+        });
+
         // Force HTTPS in production
         if ($this->app->environment('production')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
