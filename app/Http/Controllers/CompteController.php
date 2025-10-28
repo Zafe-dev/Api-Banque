@@ -129,49 +129,59 @@ class CompteController extends Controller
      */
     public function index(IndexComptesRequest $request): JsonResponse
     {
+        try {
+            // Clé de cache pour éviter les requêtes répétées
+            $cacheKey = 'comptes_' . md5(serialize($request->all()));
 
-        // Clé de cache pour éviter les requêtes répétées
-        $cacheKey = 'comptes_' . md5(serialize($request->all()));
+            $comptes = Cache::remember($cacheKey, 3600, function () use ($request) {
+                $query = Compte::with('client:id,titulaire');
 
-        $comptes = Cache::remember($cacheKey, 3600, function () use ($request) {
-            $query = Compte::with('client:id,titulaire');
+                // Filtres selon le rôle de l'utilisateur
+                $user = auth()->user();
 
-            // Filtres selon le rôle de l'utilisateur
-            $user = auth()->user();
+                if ($user instanceof Client) {
+                    // Client ne voit que ses propres comptes
+                    $query->where('client_id', $user->id);
+                }
+                // Admin voit tous les comptes (pas de filtre supplémentaire)
 
-            if ($user instanceof Client) {
-                // Client ne voit que ses propres comptes
-                $query->where('client_id', $user->id);
-            }
-            // Admin voit tous les comptes (pas de filtre supplémentaire)
+                // Appliquer les filtres de requête
+                if ($request->has('type') && $request->type) {
+                    $query->parType($request->type);
+                }
 
-            // Appliquer les filtres de requête
-            if ($request->has('type') && $request->type) {
-                $query->parType($request->type);
-            }
+                if ($request->has('statut') && $request->statut) {
+                    $query->parStatut($request->statut);
+                }
 
-            if ($request->has('statut') && $request->statut) {
-                $query->parStatut($request->statut);
-            }
+                if ($request->has('search') && $request->search) {
+                    $query->recherche($request->search);
+                }
 
-            if ($request->has('search') && $request->search) {
-                $query->recherche($request->search);
-            }
+                // Tri
+                $sort = $request->get('sort', 'dateCreation');
+                $order = $request->get('order', 'desc');
+                $query->trierPar($sort, $order);
 
-            // Tri
-            $sort = $request->get('sort', 'dateCreation');
-            $order = $request->get('order', 'desc');
-            $query->trierPar($sort, $order);
+                // Pagination
+                $limit = $request->get('limit', 10);
+                return $query->paginate($limit);
+            });
 
-            // Pagination
-            $limit = $request->get('limit', 10);
-            return $query->paginate($limit);
-        });
+            // Formater la réponse avec les métadonnées
+            $response = $this->formatPaginatedResponse($comptes);
 
-        // Formater la réponse avec les métadonnées
-        $response = $this->formatPaginatedResponse($comptes);
-
-        return response()->json($response);
+            return response()->json($response);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => 'Une erreur interne s\'est produite',
+                    'details' => config('app.debug') ? $e->getMessage() : null
+                ]
+            ], 500);
+        }
     }
 
     /**
