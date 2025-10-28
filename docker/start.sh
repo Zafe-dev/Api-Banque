@@ -41,13 +41,8 @@ else
     echo "❌ Problème avec les clés Passport"
 fi
 
-# Installer Passport si nécessaire
-echo "🔐 Installation de Passport..."
-php artisan passport:install --force || true
-
-# Créer un client personnel si nécessaire
-echo "🔐 Création du client personnel Passport..."
-php artisan passport:client --personal --name="API Personal Access Client" --no-interaction || true
+# Passport est maintenant géré via les variables d'environnement dans AppServiceProvider
+echo "🔐 Passport configuré via variables d'environnement"
 
 # Lancer les seeders pour peupler la base de données
 echo "🌱 Exécution des seeders..."
