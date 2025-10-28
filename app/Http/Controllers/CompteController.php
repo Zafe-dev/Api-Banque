@@ -178,7 +178,7 @@ class CompteController extends Controller
                 'error' => [
                     'code' => 'INTERNAL_ERROR',
                     'message' => 'Une erreur interne s\'est produite',
-                    'details' => config('app.debug') ? $e->getMessage() : null
+                    'details' => $e->getMessage()
                 ]
             ], 500);
         }
