@@ -17,7 +17,8 @@ else
 fi
 
 # Lancer les migrations si la BDD est dispo
-php artisan migrate --force || true
+echo "🔄 Exécution des migrations..."
+php artisan migrate --force --no-interaction || echo "⚠️ Migrations échouées, continuation..."
 
 # Générer les clés Passport AVANT tout le reste (seulement si elles n'existent pas)
 echo "🔐 Vérification des clés Passport..."
@@ -47,7 +48,7 @@ echo "🔐 Passport configuré via variables d'environnement"
 # Vérifier si la base a déjà été seedée (une seule fois)
 if [ ! -f /data/seeded.flag ]; then
     echo "🌱 Exécution des seeders (première fois)..."
-    php artisan db:seed --force || true
+    php artisan db:seed --force --no-interaction || echo "⚠️ Seeders échoués, continuation..."
     mkdir -p /data
     touch /data/seeded.flag
     echo "✅ Base de données seedée et flag créé"
