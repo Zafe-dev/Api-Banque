@@ -27,7 +27,7 @@ class Handler extends ExceptionHandler
             //
         });
 
-        // Gérer les erreurs d'authentification pour les APIs
+        // Override the unauthenticated method to prevent redirect to login route
         $this->renderable(function (\Illuminate\Auth\AuthenticationException $e, $request) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -38,6 +38,15 @@ class Handler extends ExceptionHandler
                     ]
                 ], 401);
             }
+
+            // For non-JSON requests, return JSON to avoid redirect
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'UNAUTHENTICATED',
+                    'message' => 'Authentification requise'
+                ]
+            ], 401);
         });
 
         // Gérer les erreurs de route non trouvée pour les APIs
