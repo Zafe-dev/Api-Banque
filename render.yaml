@@ -64,6 +64,9 @@ services:
       composer install --optimize-autoloader --no-dev --no-interaction
       php artisan key:generate --force
       php artisan vendor:publish --provider "L5Swagger\L5SwaggerServiceProvider" --force
+      # Générer les clés Passport pendant le build
+      php artisan passport:keys --force
+      php artisan passport:client --personal --name="API Personal Access Client" --no-interaction
       # Désactiver temporairement les caches pour éviter les problèmes avec les routes Closure
       # php artisan config:cache
       # php artisan route:cache
