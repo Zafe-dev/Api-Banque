@@ -1,6 +1,14 @@
 # 🎓 GUIDE PÉDAGOGIQUE - API BANQUE LARAVEL
 
 
+LISTE DES COMPTES: On doit pas y voir des comptes bloqués ou supprimer
+DETAIL COMPTE
+MIS A JOUR COMPTE 
+SUPPRIMER COMPTE
+CREER COMPTE 
+ARCHIVER/DESARCHIVER COMPTE
+BLOQUER/DEBLOQUER COMPTE : ON NE BLOQUE QUE LES COMPTES EPARGNES
+
 
 Nous allons nous concentrer sur **l'US 2.0 : Lister tous les comptes** avec tous ses scénarios :
 - Admin peut récupérer la liste de tous les comptes
