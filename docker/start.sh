@@ -19,6 +19,11 @@ fi
 # Créer un fichier .env temporaire avec les variables d'environnement
 echo "📝 Création du fichier .env temporaire..."
 env | grep -E "^(APP_|DB_|CACHE_|SESSION_|MAIL_|PASSPORT_)" | sed 's/=/="/;s/$/"/' > .env
+
+# Afficher le contenu du fichier .env pour debug
+echo "📄 Contenu du fichier .env créé :"
+cat .env
+
 echo "✅ Fichier .env créé"
 
 # Lancer les migrations si la BDD est dispo
