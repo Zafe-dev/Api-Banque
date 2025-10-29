@@ -134,40 +134,45 @@ class CompteController extends Controller
             // Clé de cache pour éviter les requêtes répétées
             $cacheKey = 'comptes_' . md5(serialize($request->all()));
 
-            $comptes = Cache::remember($cacheKey, 3600, function () use ($request) {
-                $query = Compte::with('client:id,titulaire');
+            // Désactiver temporairement le cache pour debug
+            $query = Compte::with('client:id,titulaire');
 
-                // Filtres selon le rôle de l'utilisateur
-                $user = auth()->user();
+            // Filtres selon le rôle de l'utilisateur
+            $user = auth()->user();
 
-                if ($user instanceof Client) {
-                    // Client ne voit que ses propres comptes
-                    $query->where('client_id', $user->id);
-                }
-                // Admin voit tous les comptes (pas de filtre supplémentaire)
+            if ($user instanceof Client) {
+                // Client ne voit que ses propres comptes
+                $query->where('client_id', $user->id);
+            }
+            // Admin voit tous les comptes (pas de filtre supplémentaire)
 
-                // Appliquer les filtres de requête
-                if ($request->has('type') && $request->type) {
-                    $query->parType($request->type);
-                }
+            // Appliquer les filtres de requête
+            if ($request->has('type') && $request->type) {
+                $query->parType($request->type);
+            }
 
-                if ($request->has('statut') && $request->statut) {
-                    $query->parStatut($request->statut);
-                }
+            if ($request->has('statut') && $request->statut) {
+                $query->parStatut($request->statut);
+            }
 
-                if ($request->has('search') && $request->search) {
-                    $query->recherche($request->search);
-                }
+            if ($request->has('search') && $request->search) {
+                $query->recherche($request->search);
+            }
 
-                // Tri
-                $sort = $request->get('sort', 'dateCreation');
-                $order = $request->get('order', 'desc');
-                $query->trierPar($sort, $order);
+            // Tri simple pour éviter les problèmes
+            $sort = $request->get('sort', 'created_at');
+            $order = $request->get('order', 'desc');
 
-                // Pagination
-                $limit = $request->get('limit', 10);
-                return $query->paginate($limit);
-            });
+            // Tri simple sans jointure pour éviter les erreurs
+            if (in_array($sort, ['created_at', 'solde', 'type', 'statut'])) {
+                $query->orderBy($sort, $order);
+            } else {
+                $query->orderBy('created_at', 'desc');
+            }
+
+            // Pagination
+            $limit = $request->get('limit', 10);
+            $comptes = $query->paginate($limit);
 
             // Formater la réponse avec les métadonnées
             $response = $this->formatPaginatedResponse($comptes);
