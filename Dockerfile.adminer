@@ -1,0 +1,7 @@
+FROM adminer:latest
+
+# Configuration par défaut pour Adminer
+ENV ADMINER_DEFAULT_SERVER=dpg-d40eu76r433s738b86ig-a
+ENV ADMINER_DEFAULT_DB=banque_api_iiop
+
+EXPOSE 8080

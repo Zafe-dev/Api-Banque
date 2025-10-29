@@ -82,4 +82,16 @@ redis:
   - name: api-banque-redis
     plan: starter
 
+  - type: web
+    name: api-banque-adminer
+    runtime: docker
+    dockerfilePath: ./Dockerfile.adminer
+    dockerContext: .
+    plan: starter
+    envVars:
+      - key: ADMINER_DEFAULT_SERVER
+        value: dpg-d40eu76r433s738b86ig-a
+      - key: ADMINER_DEFAULT_DB
+        value: banque_api_iiop
+
 
