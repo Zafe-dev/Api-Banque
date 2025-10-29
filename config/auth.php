@@ -73,7 +73,7 @@ return [
         // Provider personnalisé pour l'API qui gère admins et clients
         'api_users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\User::class,
+            'model' => App\Models\Client::class,
         ],
 
         // Provider pour les clients

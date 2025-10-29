@@ -18,10 +18,13 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip pdo_pgsql
 
-# 🎵 Installer Composer depuis l’image officielle
+# Installer l'extension Redis pour PHP
+RUN pecl install redis && docker-php-ext-enable redis
+
+# 🎵 Installer Composer depuis l'image officielle  
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 👤 Configurer l’utilisateur www-data
+# 👤 Configurer l'utilisateur www-data
 RUN usermod -u 1000 www-data && groupmod -g 1000 www-data
 
 # 📂 Définir le répertoire de travail
@@ -30,10 +33,10 @@ WORKDIR /var/www/html
 # 📦 Copier les fichiers du projet
 COPY . .
 
-# 🔒 Ajuster les permissions avant installation
+# 🔒 Ajuster les permissions avant installation  
 RUN chown -R www-data:www-data /var/www/html
 
-# 👨‍💻 Passer à l’utilisateur www-data
+# 👨‍💻 Passer à l'utilisateur www-data
 USER www-data
 
 # ⚙️ Installer les dépendances PHP sans scripts (évite erreurs Laravel)
@@ -55,7 +58,7 @@ USER root
 # 🧱 Préparer les dossiers système
 RUN mkdir -p /var/log/supervisor /var/run /var/log/nginx /var/cache/nginx
 
-# 🧩 Copier les configurations
+# 🧩 Copier les configurations  
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/default.conf /etc/nginx/sites-available/default
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -67,7 +70,7 @@ RUN chmod +x /usr/local/bin/start.sh
 # 🔐 Permissions finales
 RUN chown -R www-data:www-data /var/www/html
 
-# 🌐 Exposer le port 80
+# 🌐 Exposer le port 80  
 EXPOSE 80
 
 # 🏁 Commande de démarrage

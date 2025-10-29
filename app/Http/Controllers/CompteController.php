@@ -153,9 +153,7 @@ class CompteController extends Controller
             'user_id' => $user->id,
             'user_type' => get_class($user),
             'user_email' => $user->email,
-            'is_client' => $user instanceof Client,
-            'is_admin' => $user instanceof Admin,
-            'user_role' => $user->role ?? 'no_role'
+            'role' => $user->role ?? 'no_role'
         ]);
 
         // Construire la requête de base
@@ -170,37 +168,41 @@ class CompteController extends Controller
             'created_at'
         ]);
 
-        // Filtrer selon le type d'utilisateur
-        if ($user instanceof Client) {
-            Log::info('Filtering comptes for client', [
-                'client_id' => $user->id,
-                'client_email' => $user->email
-            ]);
-            
-            // Vérifier combien de comptes ce client a AVANT filtrage
-            $totalComptesClient = Compte::where('client_id', $user->id)->count();
-            Log::info('Total comptes for this client (before filters)', [
-                'count' => $totalComptesClient
-            ]);
-            
-            $query->where('client_id', $user->id);
-        } 
-        elseif ($user instanceof Admin || (isset($user->role) && $user->role === 'admin')) {
-            Log::info('Admin accessing all comptes - no filtering');
-            // Pas de filtre pour l'admin
-        } 
-        else {
-            Log::error('Unknown user type cannot access comptes', [
-                'user_type' => get_class($user),
-                'user_id' => $user->id
-            ]);
-            return response()->json([
-                'success' => false,
-                'error' => [
-                    'code' => 'ACCESS_DENIED',
-                    'message' => 'Type d\'utilisateur non autorisé'
-                ]
-            ], 403);
+        // Filtrer selon le rôle de l'utilisateur
+        switch($user->role) {
+            case 'client':
+                Log::info('Filtering comptes for client', [
+                    'client_id' => $user->id,
+                    'client_email' => $user->email
+                ]);
+                
+                // Vérifier combien de comptes ce client a AVANT filtrage
+                $totalComptesClient = Compte::where('client_id', $user->id)->count();
+                Log::info('Total comptes for this client (before filters)', [
+                    'count' => $totalComptesClient
+                ]);
+                
+                $query->where('client_id', $user->id);
+                break;
+
+            case 'admin':
+                Log::info('Admin accessing all comptes - no filtering');
+                // Pas de filtre pour l'admin
+                break;
+
+            default:
+                Log::error('Unknown user role cannot access comptes', [
+                    'user_type' => get_class($user),
+                    'user_id' => $user->id,
+                    'role' => $user->role ?? 'no_role'
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'ACCESS_DENIED',
+                        'message' => 'Type d\'utilisateur non autorisé'
+                    ]
+                ], 403);
         }
 
         // Appliquer les filtres (statut, type, etc.)
@@ -328,7 +330,24 @@ class CompteController extends Controller
         // Vérifier les permissions
         $user = auth()->user();
 
-        if ($user instanceof Client && $compte->client_id !== $user->id) {
+        // Vérifier si l'utilisateur est authentifié
+        if (!$user) {
+            Log::error('No authenticated user in show method');
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'UNAUTHENTICATED',
+                    'message' => 'Utilisateur non authentifié'
+                ]
+            ], 401);
+        }
+
+        // Vérifier les permissions selon le type d'utilisateur
+        if ($user->role === 'client' && $compte->client_id !== $user->id) {
+            Log::warning('Client attempting to access unauthorized account', [
+                'user_id' => $user->id,
+                'compte_id' => $compte->id
+            ]);
             return response()->json([
                 'success' => false,
                 'error' => [

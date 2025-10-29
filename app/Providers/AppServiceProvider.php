@@ -33,10 +33,7 @@ class AppServiceProvider extends ServiceProvider
             \Laravel\Passport\Passport::loadKeysFrom(storage_path());
         }
 
-        // Enregistrer Debugbar seulement en local
-        if ($this->app->environment('local')) {
-            $this->app->register(\Barryvdh\Debugbar\ServiceProvider::class);
-        }
+
 
         // Force HTTPS in production
         if ($this->app->environment('production')) {

@@ -18,14 +18,26 @@ class ApiUserProvider implements UserProvider
      */
     public function retrieveById($identifier): ?Authenticatable
     {
+        Log::info('Retrieving user by ID', ['id' => $identifier]);
+        
         // Essayer d'abord de trouver dans les admins (table users)
         $user = Admin::find($identifier);
         if ($user) {
+            Log::info('Admin found by ID', ['id' => $identifier]);
+            $user->role = 'admin'; // Explicitement définir le rôle
             return $user;
         }
 
         // Sinon chercher dans les clients (table clients)
-        return Client::find($identifier);
+        $client = Client::find($identifier);
+        if ($client) {
+            Log::info('Client found by ID', ['id' => $identifier]);
+            $client->role = 'client'; // Explicitement définir le rôle
+            return $client;
+        }
+
+        Log::warning('No user found by ID', ['id' => $identifier]);
+        return null;
     }
 
     /**
@@ -63,20 +75,33 @@ class ApiUserProvider implements UserProvider
     public function retrieveByCredentials(array $credentials): ?Authenticatable
     {
         if (empty($credentials) || !isset($credentials['email'])) {
+            Log::warning('Empty credentials or missing email');
             return null;
         }
+
+        Log::info('Retrieving user by credentials', ['email' => $credentials['email']]);
 
         // Essayer d'abord de trouver dans les admins (table users)
         $user = Admin::where('email', $credentials['email'])->first();
         if ($user) {
-            Log::info('Admin trouvé', ['email' => $credentials['email']]);
+            Log::info('Admin trouvé', [
+                'email' => $credentials['email'], 
+                'id' => $user->id,
+                'class' => get_class($user)
+            ]);
+            $user->role = 'admin'; // Explicitement définir le rôle
             return $user;
         }
 
         // Sinon chercher dans les clients (table clients)
         $client = Client::where('email', $credentials['email'])->first();
         if ($client) {
-            Log::info('Client trouvé', ['email' => $credentials['email'], 'id' => $client->id]);
+            Log::info('Client trouvé', [
+                'email' => $credentials['email'], 
+                'id' => $client->id,
+                'class' => get_class($client)
+            ]);
+            $client->role = 'client'; // Explicitement définir le rôle
             return $client;
         }
 
