@@ -67,6 +67,11 @@ class RoleMiddleware
             return 'admin';
         }
 
+        // Vérifier si c'est un User avec un rôle admin
+        if ($user instanceof \App\Models\User && isset($user->role) && $user->role === 'admin') {
+            return 'admin';
+        }
+
         // Par défaut
         return 'client';
     }
