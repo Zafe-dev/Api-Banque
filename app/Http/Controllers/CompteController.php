@@ -173,9 +173,13 @@ class CompteController extends Controller
                 // Récupération du client séparément pour éviter les erreurs de jointure
                 $client = null;
                 try {
-                    $client = \App\Models\Client::find($compte->client_id);
+                    $client = \App\Models\Client::where('id', $compte->client_id)->first();
                 } catch (\Exception $e) {
-                    // Si le client n'existe pas, on continue
+                    Log::warning('Erreur récupération client', [
+                        'compte_id' => $compte->id,
+                        'client_id' => $compte->client_id,
+                        'error' => $e->getMessage()
+                    ]);
                 }
 
                 return [
