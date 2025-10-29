@@ -155,8 +155,17 @@ class CompteController extends Controller
 
             // Filtres selon le rôle de l'utilisateur
             $user = auth()->user();
+            Log::info('User in comptes index', [
+                'user_id' => $user ? $user->id : null,
+                'user_type' => get_class($user),
+                'user_email' => $user ? $user->email : null
+            ]);
+
             if ($user instanceof Client) {
+                Log::info('Filtering for client', ['client_id' => $user->id]);
                 $query->where('client_id', $user->id);
+            } else {
+                Log::info('No filtering for admin');
             }
 
             // IMPORTANT: Ne pas montrer les comptes bloqués ou supprimés
