@@ -153,7 +153,10 @@ class CompteController extends Controller
             'user_id' => $user->id,
             'user_type' => get_class($user),
             'user_email' => $user->email,
-            'role' => $user->role ?? 'no_role'
+            'role' => $user->role ?? 'no_role',
+            'is_admin' => $user instanceof \App\Models\Admin,
+            'is_client' => $user instanceof \App\Models\Client,
+            'is_user' => $user instanceof \App\Models\User
         ]);
 
         // Construire la requête de base
