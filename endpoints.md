@@ -1,5 +1,14 @@
 # 🚀 GUIDE COMPLET - API BANQUE LARAVEL - ENDPOINTS DE PRODUCTION
 
+
+LISTE DES COMPTES: On doit pas y voir des comptes bloqués ou supprimer
+DETAIL COMPTE
+MIS A JOUR COMPTE 
+SUPPRIMER COMPTE
+CREER COMPTE 
+ARCHIVER/DESARCHIVER COMPTE
+BLOQUER/DEBLOQUER COMPTE : ON NE BLOQUE QUE LES COMPTES EPARGNES
+
 **Base URL Production :** `https://seck-moustapha-sn.onrender.com/api/v1`
 
 **Base URL Local :** `http://127.0.0.1:8000/api/v1`
