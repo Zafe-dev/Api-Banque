@@ -12,6 +12,7 @@ use App\Http\Requests\DebloquerCompteRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Info(
@@ -173,15 +174,22 @@ class CompteController extends Controller
 
             return response()->json($response);
         } catch (\Exception $e) {
+            // Log détaillé de l'erreur
+            Log::error('Erreur dans CompteController@index', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user' => auth()->user() ? auth()->user()->id : 'null',
+                'request' => $request->all()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'error' => [
                     'code' => 'INTERNAL_ERROR',
                     'message' => 'Une erreur interne s\'est produite',
-                    'details' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => explode("\n", $e->getTraceAsString())[0] // Only first line for brevity
+                    'details' => config('app.debug') ? $e->getMessage() : 'Contactez l\'administrateur',
+                    'file' => config('app.debug') ? basename($e->getFile()) : null,
+                    'line' => config('app.debug') ? $e->getLine() : null
                 ]
             ], 500);
         }
