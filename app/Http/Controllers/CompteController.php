@@ -131,70 +131,69 @@ class CompteController extends Controller
     public function index(IndexComptesRequest $request): JsonResponse
     {
         try {
-            // Clé de cache pour éviter les requêtes répétées
-            $cacheKey = 'comptes_' . md5(serialize($request->all()));
-
-            // Désactiver temporairement le cache pour debug
-            $query = Compte::with('client:id,titulaire');
+            // Requête simplifiée pour éviter tous les problèmes
+            $query = Compte::select([
+                'id',
+                'numero_compte',
+                'client_id',
+                'type',
+                'solde',
+                'devise',
+                'statut',
+                'created_at'
+            ])->with(['client:id,titulaire']);
 
             // Filtres selon le rôle de l'utilisateur
             $user = auth()->user();
-
             if ($user instanceof Client) {
-                // Client ne voit que ses propres comptes
                 $query->where('client_id', $user->id);
             }
-            // Admin voit tous les comptes (pas de filtre supplémentaire)
 
-            // Appliquer les filtres de requête
-            if ($request->has('type') && $request->type) {
-                $query->parType($request->type);
-            }
+            // Tri simple
+            $query->orderBy('created_at', 'desc');
 
-            if ($request->has('statut') && $request->statut) {
-                $query->parStatut($request->statut);
-            }
+            // Pagination simple
+            $comptes = $query->paginate(10);
 
-            if ($request->has('search') && $request->search) {
-                $query->recherche($request->search);
-            }
+            // Formatage simplifié
+            $data = $comptes->getCollection()->map(function ($compte) {
+                return [
+                    'id' => $compte->id,
+                    'numeroCompte' => $compte->numero_compte,
+                    'titulaire' => $compte->client ? $compte->client->titulaire : 'N/A',
+                    'type' => $compte->type,
+                    'solde' => $compte->solde,
+                    'devise' => $compte->devise,
+                    'dateCreation' => $compte->created_at,
+                    'statut' => $compte->statut
+                ];
+            });
 
-            // Tri simple pour éviter les problèmes
-            $sort = $request->get('sort', 'created_at');
-            $order = $request->get('order', 'desc');
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'pagination' => [
+                    'currentPage' => $comptes->currentPage(),
+                    'totalPages' => $comptes->lastPage(),
+                    'totalItems' => $comptes->total(),
+                    'itemsPerPage' => $comptes->perPage()
+                ]
+            ]);
 
-            // Tri simple sans jointure pour éviter les erreurs
-            if (in_array($sort, ['created_at', 'solde', 'type', 'statut'])) {
-                $query->orderBy($sort, $order);
-            } else {
-                $query->orderBy('created_at', 'desc');
-            }
-
-            // Pagination
-            $limit = $request->get('limit', 10);
-            $comptes = $query->paginate($limit);
-
-            // Formater la réponse avec les métadonnées
-            $response = $this->formatPaginatedResponse($comptes);
-
-            return response()->json($response);
         } catch (\Exception $e) {
-            // Log détaillé de l'erreur
             Log::error('Erreur dans CompteController@index', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'user' => auth()->user() ? auth()->user()->id : 'null',
-                'request' => $request->all()
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => substr($e->getTraceAsString(), 0, 1000)
             ]);
 
             return response()->json([
                 'success' => false,
                 'error' => [
                     'code' => 'INTERNAL_ERROR',
-                    'message' => 'Une erreur interne s\'est produite',
-                    'details' => config('app.debug') ? $e->getMessage() : 'Contactez l\'administrateur',
-                    'file' => config('app.debug') ? basename($e->getFile()) : null,
-                    'line' => config('app.debug') ? $e->getLine() : null
+                    'message' => 'Erreur: ' . $e->getMessage(),
+                    'file' => basename($e->getFile()) . ':' . $e->getLine()
                 ]
             ], 500);
         }
