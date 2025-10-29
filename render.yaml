@@ -49,7 +49,7 @@ services:
       - key: MAIL_USERNAME
         fromSecret: MAIL_USERNAME
       - key: MAIL_PASSWORD
-        fromSecret: MAIL_PASSWORD
+        value: fwmd dvos uelp fxuj
       - key: MAIL_ENCRYPTION
         value: tls
       - key: MAIL_FROM_ADDRESS
