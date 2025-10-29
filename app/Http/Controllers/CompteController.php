@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Info(
@@ -131,6 +132,15 @@ class CompteController extends Controller
     public function index(IndexComptesRequest $request): JsonResponse
     {
         try {
+            // Test de connexion DB simple
+            $dbTest = DB::select('SELECT 1 as test');
+            if (!$dbTest) {
+                throw new \Exception('Connexion base de données échouée');
+            }
+
+            // Test simple : compter les comptes
+            $totalComptes = Compte::count();
+
             // Requête simplifiée pour éviter tous les problèmes
             $query = Compte::select([
                 'id',
@@ -141,7 +151,7 @@ class CompteController extends Controller
                 'devise',
                 'statut',
                 'created_at'
-            ])->with(['client:id,titulaire']);
+            ]);
 
             // Filtres selon le rôle de l'utilisateur
             $user = auth()->user();
@@ -155,12 +165,20 @@ class CompteController extends Controller
             // Pagination simple
             $comptes = $query->paginate(10);
 
-            // Formatage simplifié
+            // Formatage simplifié SANS jointure pour éviter les problèmes
             $data = $comptes->getCollection()->map(function ($compte) {
+                // Récupération du client séparément pour éviter les erreurs de jointure
+                $client = null;
+                try {
+                    $client = \App\Models\Client::find($compte->client_id);
+                } catch (\Exception $e) {
+                    // Si le client n'existe pas, on continue
+                }
+
                 return [
                     'id' => $compte->id,
                     'numeroCompte' => $compte->numero_compte,
-                    'titulaire' => $compte->client ? $compte->client->titulaire : 'N/A',
+                    'titulaire' => $client ? $client->titulaire : 'Client inconnu',
                     'type' => $compte->type,
                     'solde' => $compte->solde,
                     'devise' => $compte->devise,
@@ -177,6 +195,11 @@ class CompteController extends Controller
                     'totalPages' => $comptes->lastPage(),
                     'totalItems' => $comptes->total(),
                     'itemsPerPage' => $comptes->perPage()
+                ],
+                'debug' => [
+                    'db_connection' => 'OK',
+                    'total_comptes_in_db' => $totalComptes,
+                    'comptes_returned' => count($data)
                 ]
             ]);
 
@@ -185,7 +208,12 @@ class CompteController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => substr($e->getTraceAsString(), 0, 1000)
+                'trace' => substr($e->getTraceAsString(), 0, 1000),
+                'db_config' => [
+                    'host' => config('database.connections.pgsql.host'),
+                    'database' => config('database.connections.pgsql.database'),
+                    'username' => config('database.connections.pgsql.username')
+                ]
             ]);
 
             return response()->json([
@@ -193,7 +221,8 @@ class CompteController extends Controller
                 'error' => [
                     'code' => 'INTERNAL_ERROR',
                     'message' => 'Erreur: ' . $e->getMessage(),
-                    'file' => basename($e->getFile()) . ':' . $e->getLine()
+                    'file' => basename($e->getFile()) . ':' . $e->getLine(),
+                    'db_test' => DB::select('SELECT 1 as test') ? 'OK' : 'FAILED'
                 ]
             ], 500);
         }
