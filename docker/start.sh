@@ -18,7 +18,37 @@ fi
 
 # Créer un fichier .env temporaire avec les variables d'environnement
 echo "📝 Création du fichier .env temporaire..."
-env | grep -E "^(APP_|DB_|CACHE_|SESSION_|MAIL_|PASSPORT_)" | sed 's/=/="/;s/$/"/' > .env
+
+# Créer le fichier .env manuellement avec les bonnes valeurs
+cat > .env << EOF
+APP_NAME="${APP_NAME:-moustapha-seck}"
+APP_ENV="${APP_ENV:-production}"
+APP_KEY="${APP_KEY}"
+APP_DEBUG="${APP_DEBUG:-false}"
+APP_URL="${APP_URL:-https://seck-moustapha-sn.onrender.com}"
+
+DB_CONNECTION="${DB_CONNECTION:-pgsql}"
+DB_HOST="${DB_HOST:-dpg-d40eu76r433s738b86ig-a}"
+DB_PORT="${DB_PORT:-5432}"
+DB_DATABASE="${DB_DATABASE:-banque_api_iiop}"
+DB_USERNAME="${DB_USERNAME:-banque_user}"
+DB_PASSWORD="${DB_PASSWORD:-B8nSoFPHv3raL3pZWafjdpb9h3uf0rvv}"
+
+CACHE_DRIVER="${CACHE_DRIVER:-file}"
+SESSION_DRIVER="${SESSION_DRIVER:-file}"
+
+MAIL_MAILER="${MAIL_MAILER:-smtp}"
+MAIL_HOST="${MAIL_HOST:-smtp.gmail.com}"
+MAIL_PORT="${MAIL_PORT:-587}"
+MAIL_USERNAME="${MAIL_USERNAME:-seckmoustapha238@gmail.com}"
+MAIL_PASSWORD="${MAIL_PASSWORD:-fwmd dvos uelp fxuj}"
+MAIL_ENCRYPTION="${MAIL_ENCRYPTION:-tls}"
+MAIL_FROM_ADDRESS="${MAIL_FROM_ADDRESS:-seckmoustapha238@gmail.com}"
+MAIL_FROM_NAME="${MAIL_FROM_NAME:-API Banque}"
+
+PASSPORT_PRIVATE_KEY="${PASSPORT_PRIVATE_KEY}"
+PASSPORT_PUBLIC_KEY="${PASSPORT_PUBLIC_KEY}"
+EOF
 
 # Afficher le contenu du fichier .env pour debug
 echo "📄 Contenu du fichier .env créé :"
