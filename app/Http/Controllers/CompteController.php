@@ -155,17 +155,33 @@ class CompteController extends Controller
 
             // Filtres selon le rôle de l'utilisateur
             $user = auth()->user();
+
+            // Vérifier si l'utilisateur est authentifié
+            if (!$user) {
+                Log::error('No authenticated user in comptes index');
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'UNAUTHENTICATED',
+                        'message' => 'Utilisateur non authentifié'
+                    ]
+                ], 401);
+            }
+
             Log::info('User in comptes index', [
-                'user_id' => $user ? $user->id : null,
+                'user_id' => $user->id,
                 'user_type' => get_class($user),
-                'user_email' => $user ? $user->email : null
+                'user_email' => $user->email,
+                'user_role' => $user->role ?? 'no_role'
             ]);
 
             if ($user instanceof Client) {
                 Log::info('Filtering for client', ['client_id' => $user->id]);
                 $query->where('client_id', $user->id);
-            } else {
+            } elseif ($user->role === 'admin' || get_class($user) === 'App\\Models\\Admin') {
                 Log::info('No filtering for admin');
+            } else {
+                Log::warning('Unknown user type', ['user_type' => get_class($user)]);
             }
 
             // IMPORTANT: Ne pas montrer les comptes bloqués ou supprimés

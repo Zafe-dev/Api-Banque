@@ -121,8 +121,12 @@ class AuthController extends Controller
         }
 
         // Générer les tokens avec Passport
-        $tokenResult = $user->createToken('API Token');
-        $token = $tokenResult->accessToken;
+        if (method_exists($user, 'createToken')) {
+            $tokenResult = $user->createToken('API Token');
+            $token = $tokenResult->accessToken;
+        } else {
+            throw new \RuntimeException('L\'utilisateur ne peut pas créer de token.');
+        }
 
         // Formater les données utilisateur selon le type
         $userData = [

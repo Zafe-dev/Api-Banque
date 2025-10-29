@@ -7,6 +7,8 @@ use App\Models\Client;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\Model;
 
 class ApiUserProvider implements UserProvider
 {
@@ -45,12 +47,17 @@ class ApiUserProvider implements UserProvider
      */
     public function updateRememberToken(Authenticatable $user, $token): void
     {
-        $user->setRememberToken($token);
-        $user->save();
+        if ($user instanceof Model) {
+            $user->setRememberToken($token);
+            $user->save();
+        }
     }
 
     /**
      * Retrieve a user by the given credentials.
+     *
+     * @param  array<string, mixed>  $credentials Les identifiants de connexion (email, password, etc.)
+     * @return \Illuminate\Contracts\Auth\Authenticatable|null L'utilisateur trouvé ou null si non trouvé
      */
     public function retrieveByCredentials(array $credentials): ?Authenticatable
     {
@@ -73,7 +80,7 @@ class ApiUserProvider implements UserProvider
      */
     public function validateCredentials(Authenticatable $user, array $credentials): bool
     {
-        return isset($credentials['password']) && \Hash::check($credentials['password'], $user->getAuthPassword());
+        return isset($credentials['password']) && Hash::check($credentials['password'], $user->getAuthPassword());
     }
 
     /**
