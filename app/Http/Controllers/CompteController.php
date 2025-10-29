@@ -169,40 +169,35 @@ class CompteController extends Controller
         ]);
 
         // Filtrer selon le rôle de l'utilisateur
-        switch($user->role) {
-            case 'client':
-                Log::info('Filtering comptes for client', [
-                    'client_id' => $user->id,
-                    'client_email' => $user->email
-                ]);
-                
-                // Vérifier combien de comptes ce client a AVANT filtrage
-                $totalComptesClient = Compte::where('client_id', $user->id)->count();
-                Log::info('Total comptes for this client (before filters)', [
-                    'count' => $totalComptesClient
-                ]);
-                
-                $query->where('client_id', $user->id);
-                break;
+        if ($user instanceof \App\Models\Client) {
+            Log::info('Filtering comptes for client', [
+                'client_id' => $user->id,
+                'client_email' => $user->email
+            ]);
 
-            case 'admin':
-                Log::info('Admin accessing all comptes - no filtering');
-                // Pas de filtre pour l'admin
-                break;
+            // Vérifier combien de comptes ce client a AVANT filtrage
+            $totalComptesClient = Compte::where('client_id', $user->id)->count();
+            Log::info('Total comptes for this client (before filters)', [
+                'count' => $totalComptesClient
+            ]);
 
-            default:
-                Log::error('Unknown user role cannot access comptes', [
-                    'user_type' => get_class($user),
-                    'user_id' => $user->id,
-                    'role' => $user->role ?? 'no_role'
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'ACCESS_DENIED',
-                        'message' => 'Type d\'utilisateur non autorisé'
-                    ]
-                ], 403);
+            $query->where('client_id', $user->id);
+        } elseif ($user instanceof \App\Models\Admin || ($user instanceof \App\Models\User && $user->role === 'admin')) {
+            Log::info('Admin accessing all comptes - no filtering');
+            // Pas de filtre pour l'admin
+        } else {
+            Log::error('Unknown user type cannot access comptes', [
+                'user_type' => get_class($user),
+                'user_id' => $user->id,
+                'role' => $user->role ?? 'no_role'
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'ACCESS_DENIED',
+                    'message' => 'Type d\'utilisateur non autorisé'
+                ]
+            ], 403);
         }
 
         // Appliquer les filtres (statut, type, etc.)
