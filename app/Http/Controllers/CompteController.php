@@ -29,7 +29,13 @@ class CompteController extends Controller
 
             Log::info('User accessing comptes index', [
                 'user_id' => $user->id,
-                'role' => $user->role ?? 'no_role'
+                'user_type' => get_class($user),
+                'user_email' => $user->email,
+                'role' => $user->role ?? 'no_role',
+                'is_admin' => $user instanceof \App\Models\Admin,
+                'is_client' => $user instanceof \App\Models\Client,
+                'is_user' => $user instanceof \App\Models\User,
+                'attributes' => $user->attributes ?? []
             ]);
 
             $query = Compte::with('client:id,titulaire');
