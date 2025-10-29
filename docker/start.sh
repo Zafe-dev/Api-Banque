@@ -53,7 +53,18 @@ if [ ! -f /data/seeded.flag ]; then
     touch /data/seeded.flag
     echo "✅ Base de données seedée et flag créé"
 else
-    echo "✅ Base de données déjà seedée, passage..."
+    echo "✅ Base de données déjà seedée, vérification des données..."
+    # Vérifier si les données existent déjà
+    ADMIN_COUNT=$(php artisan tinker --execute="echo App\Models\Admin::count();" 2>/dev/null || echo "0")
+    CLIENT_COUNT=$(php artisan tinker --execute="echo App\Models\Client::count();" 2>/dev/null || echo "0")
+    COMPTE_COUNT=$(php artisan tinker --execute="echo App\Models\Compte::count();" 2>/dev/null || echo "0")
+
+    if [ "$ADMIN_COUNT" = "0" ] || [ "$CLIENT_COUNT" = "0" ] || [ "$COMPTE_COUNT" = "0" ]; then
+        echo "⚠️ Données manquantes, re-exécution des seeders..."
+        php artisan db:seed --force --no-interaction || echo "⚠️ Seeders échoués, continuation..."
+    else
+        echo "✅ Données déjà présentes: $ADMIN_COUNT admins, $CLIENT_COUNT clients, $COMPTE_COUNT comptes"
+    fi
 fi
 
 # Générer la documentation Swagger AVANT les caches
