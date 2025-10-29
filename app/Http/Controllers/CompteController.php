@@ -11,76 +11,79 @@ use Illuminate\Support\Facades\Log;
 
 class CompteController extends Controller
 {
-    public function index(Request $request): JsonResponse
-    {
-        try {
-            $user = auth()->user();
+   public function index(Request $request): JsonResponse
+{
+    try {
+        $user = auth()->user();
 
-            if (!$user) {
-                Log::error('No authenticated user in comptes index');
-                return response()->json([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'UNAUTHENTICATED',
-                        'message' => 'Utilisateur non authentifié'
-                    ]
-                ], 401);
-            }
-
-            Log::info('User accessing comptes index', [
-                'user_id' => $user->id,
-                'user_type' => get_class($user),
-                'user_email' => $user->email,
-                'role' => $user->role ?? 'no_role',
-                'is_admin' => $user instanceof \App\Models\Admin,
-                'is_client' => $user instanceof \App\Models\Client,
-                'is_user' => $user instanceof \App\Models\User,
-                'attributes' => $user->attributes ?? []
-            ]);
-
-            $query = Compte::with('client:id,titulaire');
-
-            if (($user->role ?? null) === 'client') {
-                $query->where('client_id', $user->id);
-                Log::info('Filtering comptes for client', ['client_id' => $user->id]);
-            } elseif (($user->role ?? null) === 'admin') {
-                Log::info('Admin accessing all comptes', ['user_id' => $user->id]);
-            } else {
-                Log::error('Unknown user type cannot access comptes', ['user_type' => get_class($user)]);
-                return response()->json([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'ACCESS_DENIED',
-                        'message' => 'Type d\'utilisateur non autorisé'
-                    ]
-                ], 403);
-            }
-
-            if ($request->has('type')) $query->where('type', $request->type);
-            if ($request->has('statut')) $query->where('statut', $request->statut);
-            else $query->where('statut', 'actif');
-
-            $query->orderBy('created_at', 'desc');
-
-            $limit = min($request->input('limit', 10), 100);
-            $comptes = $query->paginate($limit);
-
-            return response()->json($this->formatPaginatedResponse($comptes));
-        } catch (\Exception $e) {
-            Log::error('Error in CompteController@index', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
+        if (!$user) {
+            Log::error('No authenticated user in comptes index');
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'INTERNAL_ERROR',
-                    'message' => 'Une erreur interne s\'est produite'
+                    'code' => 'UNAUTHENTICATED',
+                    'message' => 'Utilisateur non authentifié'
                 ]
-            ], 500);
+            ], 401);
         }
+
+        Log::info('User accessing comptes index', [
+            'user_id' => $user->id,
+            'user_type' => get_class($user),
+            'user_email' => $user->email,
+            'role' => $user->role ?? 'no_role',
+        ]);
+
+        $query = Compte::with('client:id,titulaire');
+
+        // Vérifier si c'est un admin (User model) ou un client (Client model)
+        $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+        $isClient = $user instanceof \App\Models\Client;
+
+        if ($isClient && !$isAdmin) {
+            // Client : voir uniquement ses comptes
+            $query->where('client_id', $user->id);
+            Log::info('Filtering comptes for client', ['client_id' => $user->id]);
+        } elseif ($isAdmin) {
+            // Admin : voir tous les comptes
+            Log::info('Admin accessing all comptes', ['user_id' => $user->id]);
+        } else {
+            Log::error('Unknown user type', ['user_type' => get_class($user), 'role' => $user->role ?? 'none']);
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'ACCESS_DENIED',
+                    'message' => 'Type d\'utilisateur non autorisé'
+                ]
+            ], 403);
+        }
+
+        if ($request->has('type')) $query->where('type', $request->type);
+        if ($request->has('statut')) $query->where('statut', $request->statut);
+        else $query->where('statut', 'actif');
+
+        $query->orderBy('created_at', 'desc');
+
+        $limit = min($request->input('limit', 10), 100);
+        $comptes = $query->paginate($limit);
+
+        return response()->json($this->formatPaginatedResponse($comptes));
+    } catch (\Exception $e) {
+        Log::error('Error in CompteController@index', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json([
+            'success' => false,
+            'error' => [
+                'code' => 'INTERNAL_ERROR',
+                'message' => 'Une erreur interne s\'est produite'
+            ]
+        ], 500);
     }
+}
 
     public function show(Compte $compte): JsonResponse
     {

@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Laravel\Passport\Passport;
+use App\Models\Admin;
+use App\Models\Client;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -24,15 +26,28 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        // Définition des gates pour les rôles
+        Gate::define('admin', function ($user) {
+            return $user instanceof Admin && $user->isAdmin();
+        });
+
+        Gate::define('client', function ($user) {
+            return $user instanceof Client;
+        });
+
         // Configuration de Passport
-        Passport::tokensExpireIn(now()->addHours(1));
+        Passport::tokensExpireIn(now()->addDays(15));
         Passport::refreshTokensExpireIn(now()->addDays(30));
         Passport::personalAccessTokensExpireIn(now()->addMonths(6));
 
-        // Configuration des providers Passport
-        Passport::useClientModel(\Laravel\Passport\Client::class);
-        Passport::useTokenModel(\Laravel\Passport\Token::class);
-        Passport::useAuthCodeModel(\Laravel\Passport\AuthCode::class);
-        Passport::usePersonalAccessClientModel(\Laravel\Passport\PersonalAccessClient::class);
+        // Configuration des scopes OAuth2
+        Passport::tokensCan([
+            'admin' => 'Accès administrateur complet',
+            'client' => 'Accès client limité',
+        ]);
+
+        Passport::setDefaultScope([
+            'admin'
+        ]);
     }
 }

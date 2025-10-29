@@ -6,7 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
-
+   
 class AdminSeeder extends Seeder
 {
     /**
@@ -17,6 +17,7 @@ class AdminSeeder extends Seeder
         Admin::firstOrCreate([
             'email' => 'admin@banque.com'
         ], [
+            'id' => \Illuminate\Support\Str::uuid(),
             'name' => 'Administrateur',
             'email' => 'admin@banque.com',
             'password' => Hash::make('admin123'),
@@ -26,6 +27,7 @@ class AdminSeeder extends Seeder
         Admin::firstOrCreate([
             'email' => 'admin1@banque.com'
         ], [
+            'id' => \Illuminate\Support\Str::uuid(),
             'name' => 'Administrateur 1',
             'email' => 'admin1@banque.com',
             'password' => Hash::make('admin123'),

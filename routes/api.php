@@ -94,7 +94,7 @@ Route::prefix('v1')->group(function () {
     // ROUTES PROTÉGÉES (authentification requise)
     // ============================================
 
-    Route::middleware('auth:api')->group(function () {
+    Route::middleware(['auth'])->group(function () {
 
         // Routes d'authentification
         Route::prefix('auth')->group(function () {

@@ -14,7 +14,7 @@ BLOQUER/DEBLOQUER COMPTE : ON NE BLOQUE QUE LES COMPTES EPARGNES
 **Base URL Local :** `http://127.0.0.1:8000/api/v1`
 
 ---
-
+J
 ## 🔐 AUTHENTIFICATION - ÉTAPE OBLIGATOIRE
 
 ### 📝 Connexion Admin
@@ -50,7 +50,7 @@ Accept: application/json
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
     "token_type": "Bearer",
     "expires_in": 3600
-  }
+  
 }
 ```
 

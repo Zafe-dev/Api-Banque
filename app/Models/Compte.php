@@ -16,6 +16,7 @@ class Compte extends Model
         'id',
         'numero_compte',
         'client_id',
+        'user_id',
         'type',
         'solde',
         'devise',
@@ -86,6 +87,14 @@ class Compte extends Model
         } else {
             $this->attributes['numero_compte'] = $value;
         }
+    }
+
+    /**
+     * Relation avec l'administrateur
+     */
+    public function admin(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'user_id');
     }
 
     /**
