@@ -936,6 +936,34 @@
                     }
                 ]
             }
+        },
+        "/api/v1/welcome": {
+            "get": {
+                "tags": [
+                    "Public"
+                ],
+                "summary": "Welcome endpoint",
+                "description": "Returns a welcome message and logs the request metadata",
+                "operationId": "7f0958682e3ea0314d1e119c9d62d64f",
+                "responses": {
+                    "200": {
+                        "description": "Welcome message",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Welcome to the Laravel API Service!"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -1019,6 +1047,10 @@
         {
             "name": "Comptes",
             "description": "Comptes"
+        },
+        {
+            "name": "Public",
+            "description": "Public"
         }
     ]
 }

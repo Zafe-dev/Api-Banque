@@ -159,6 +159,9 @@ class CompteController extends Controller
                 $query->where('client_id', $user->id);
             }
 
+            // IMPORTANT: Ne pas montrer les comptes bloqués ou supprimés
+            $query->whereNotIn('statut', ['bloque', 'ferme']);
+
             // Tri simple
             $query->orderBy('created_at', 'desc');
 
@@ -570,6 +573,16 @@ class CompteController extends Controller
      */
     public function bloquer(BloquerCompteRequest $request, Compte $compte): JsonResponse
     {
+        // Vérifier que c'est un compte épargne (selon les spécifications)
+        if ($compte->type !== 'epargne') {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'INVALID_OPERATION',
+                    'message' => 'Seuls les comptes épargne peuvent être bloqués'
+                ]
+            ], 400);
+        }
 
         if (!$compte->peutEtreBloque()) {
             return response()->json([
