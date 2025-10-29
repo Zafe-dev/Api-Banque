@@ -16,6 +16,11 @@ else
     echo "✅ APP_KEY déjà définie dans l'environnement"
 fi
 
+# Créer un fichier .env temporaire avec les variables d'environnement
+echo "📝 Création du fichier .env temporaire..."
+env | grep -E "^(APP_|DB_|CACHE_|SESSION_|MAIL_|PASSPORT_)" | sed 's/=/="/;s/$/"/' > .env
+echo "✅ Fichier .env créé"
+
 # Lancer les migrations si la BDD est dispo
 echo "🔄 Exécution des migrations..."
 php artisan migrate --force --no-interaction || echo "⚠️ Migrations échouées, continuation..."
