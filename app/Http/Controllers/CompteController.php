@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\StoreCompteRequest;
+use App\Http\Requests\UpdateCompteRequest;
+use App\Http\Requests\BloquerCompteRequest;
+use App\Http\Requests\DebloquerCompteRequest;
 
 class CompteController extends Controller
 {
@@ -122,7 +126,7 @@ class CompteController extends Controller
         }
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreCompteRequest $request): JsonResponse
     {
         try {
             $client = $this->getOrCreateClient($request->client);
@@ -176,6 +180,252 @@ class CompteController extends Controller
             'titulaire' => $compte->client->titulaire ?? null,
             'createdAt' => $compte->created_at->format('Y-m-d H:i:s')
         ];
+    }
+
+    public function update(UpdateCompteRequest $request, Compte $compte): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in update method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'Utilisateur non authentifié']
+                ], 401);
+            }
+
+            // Vérifier que c'est un admin
+            $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+            if (!$isAdmin) {
+                Log::warning('Non-admin user attempting to update compte', ['user_id' => $user->id, 'compte_id' => $compte->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Seul un administrateur peut modifier un compte']
+                ], 403);
+            }
+
+            Log::info('Admin updating compte', [
+                'admin_id' => $user->id,
+                'compte_id' => $compte->id,
+                'data' => $request->all()
+            ]);
+
+            // Mettre à jour les informations du client associé
+            $client = $compte->client;
+            if ($request->has('titulaire')) {
+                $client->titulaire = $request->titulaire;
+            }
+
+            $clientInfo = $request->input('informationsClient', []);
+            if (isset($clientInfo['telephone'])) {
+                $client->telephone = $clientInfo['telephone'];
+            }
+            if (isset($clientInfo['email'])) {
+                $client->email = $clientInfo['email'];
+            }
+            if (isset($clientInfo['password'])) {
+                $client->password = bcrypt($clientInfo['password']);
+            }
+            if (isset($clientInfo['nci'])) {
+                $client->nci = $clientInfo['nci'];
+            }
+
+            $client->save();
+
+            // Invalider le cache
+            Cache::forget("compte_{$compte->id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte mis à jour avec succès',
+                'data' => $this->formatCompteData($compte->load('client:id,titulaire'))
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@update', [
+                'message' => $e->getMessage(),
+                'compte_id' => $compte->id ?? null
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'UPDATE_FAILED', 'message' => 'Erreur lors de la mise à jour du compte']
+            ], 500);
+        }
+    }
+
+    public function destroy(Compte $compte): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in destroy method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'Utilisateur non authentifié']
+                ], 401);
+            }
+
+            // Vérifier que c'est un admin
+            $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+            if (!$isAdmin) {
+                Log::warning('Non-admin user attempting to delete compte', ['user_id' => $user->id, 'compte_id' => $compte->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Seul un administrateur peut supprimer un compte']
+                ], 403);
+            }
+
+            Log::info('Admin deleting compte', [
+                'admin_id' => $user->id,
+                'compte_id' => $compte->id
+            ]);
+
+            // Fermer le compte (soft delete)
+            if (!$compte->fermer()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'DELETE_FAILED', 'message' => 'Impossible de supprimer ce compte']
+                ], 400);
+            }
+
+            // Invalider le cache
+            Cache::forget("compte_{$compte->id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte supprimé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@destroy', [
+                'message' => $e->getMessage(),
+                'compte_id' => $compte->id ?? null
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'DELETE_FAILED', 'message' => 'Erreur lors de la suppression du compte']
+            ], 500);
+        }
+    }
+
+    public function bloquer(BloquerCompteRequest $request, Compte $compte): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in bloquer method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'Utilisateur non authentifié']
+                ], 401);
+            }
+
+            // Vérifier que c'est un admin
+            $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+            if (!$isAdmin) {
+                Log::warning('Non-admin user attempting to block compte', ['user_id' => $user->id, 'compte_id' => $compte->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Seul un administrateur peut bloquer un compte']
+                ], 403);
+            }
+
+            Log::info('Admin blocking compte', [
+                'admin_id' => $user->id,
+                'compte_id' => $compte->id,
+                'motif' => $request->motif,
+                'duree' => $request->duree,
+                'unite' => $request->unite
+            ]);
+
+            // Bloquer le compte
+            if (!$compte->bloquer($request->motif, $request->duree, $request->unite)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'BLOCK_FAILED', 'message' => 'Impossible de bloquer ce compte (doit être un compte épargne actif)']
+                ], 400);
+            }
+
+            // Invalider le cache
+            Cache::forget("compte_{$compte->id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte bloqué avec succès',
+                'data' => $this->formatCompteData($compte->load('client:id,titulaire'))
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@bloquer', [
+                'message' => $e->getMessage(),
+                'compte_id' => $compte->id ?? null
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'BLOCK_FAILED', 'message' => 'Erreur lors du blocage du compte']
+            ], 500);
+        }
+    }
+
+    public function debloquer(DebloquerCompteRequest $request, Compte $compte): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in debloquer method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'Utilisateur non authentifié']
+                ], 401);
+            }
+
+            // Vérifier que c'est un admin
+            $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+            if (!$isAdmin) {
+                Log::warning('Non-admin user attempting to unblock compte', ['user_id' => $user->id, 'compte_id' => $compte->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Seul un administrateur peut débloquer un compte']
+                ], 403);
+            }
+
+            Log::info('Admin unblocking compte', [
+                'admin_id' => $user->id,
+                'compte_id' => $compte->id,
+                'motif' => $request->motif
+            ]);
+
+            // Débloquer le compte
+            if (!$compte->debloquer($request->motif)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNBLOCK_FAILED', 'message' => 'Impossible de débloquer ce compte (doit être bloqué)']
+                ], 400);
+            }
+
+            // Invalider le cache
+            Cache::forget("compte_{$compte->id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte débloqué avec succès',
+                'data' => $this->formatCompteData($compte->load('client:id,titulaire'))
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@debloquer', [
+                'message' => $e->getMessage(),
+                'compte_id' => $compte->id ?? null
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'UNBLOCK_FAILED', 'message' => 'Erreur lors du déblocage du compte']
+            ], 500);
+        }
     }
 
     private function formatPaginatedResponse($paginatedData): array
