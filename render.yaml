@@ -19,15 +19,15 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromDatabase: api-banque-db
+        value: dpg-d40eu76r433s738b86ig-a
       - key: DB_PORT
         value: 5432
       - key: DB_DATABASE
-        fromDatabase: api-banque-db
+        value: banque_api_iiop
       - key: DB_USERNAME
-        fromDatabase: api-banque-db
+        value: banque_user
       - key: DB_PASSWORD
-        fromDatabase: api-banque-db
+        value: B8nSoFPHv3raL3pZWafjdpb9h3uf0rvv
       - key: CACHE_DRIVER
         value: redis
       - key: REDIS_HOST
