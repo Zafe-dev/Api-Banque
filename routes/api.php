@@ -104,7 +104,7 @@ Route::prefix('v1')->group(function () {
         });
 
         // Routes des comptes (avec rate limiting et contrôle d'accès)
-        Route::middleware(['throttle:60,1', 'role:admin,client'])->prefix('comptes')->group(function () {
+        Route::middleware(['throttle:60,1'])->prefix('comptes')->group(function () {
             // Liste et détails
             Route::get('/', [App\Http\Controllers\CompteController::class, 'index']);
             Route::get('/{compte}', [App\Http\Controllers\CompteController::class, 'show']);
