@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 
 class ApiUserProvider implements UserProvider
@@ -65,14 +66,22 @@ class ApiUserProvider implements UserProvider
             return null;
         }
 
-        // Essayer d'abord de trouver dans les admins
+        // Essayer d'abord de trouver dans les admins (table users)
         $user = Admin::where('email', $credentials['email'])->first();
         if ($user) {
+            Log::info('Admin trouvé', ['email' => $credentials['email']]);
             return $user;
         }
 
-        // Sinon chercher dans les clients
-        return Client::where('email', $credentials['email'])->first();
+        // Sinon chercher dans les clients (table clients)
+        $client = Client::where('email', $credentials['email'])->first();
+        if ($client) {
+            Log::info('Client trouvé', ['email' => $credentials['email'], 'id' => $client->id]);
+            return $client;
+        }
+
+        Log::warning('Utilisateur non trouvé', ['email' => $credentials['email']]);
+        return null;
     }
 
     /**

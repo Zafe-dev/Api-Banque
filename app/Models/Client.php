@@ -6,11 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Passport\HasApiTokens;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Str;
 
-
-class Client extends User
+class Client extends Authenticatable
 {
     use HasApiTokens, HasFactory, SoftDeletes;
+
+    //  CORRECTION: Spécifier la table clients explicitement
+    protected $table = 'clients';
 
     protected $fillable = [
         'id',

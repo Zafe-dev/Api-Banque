@@ -9,6 +9,7 @@ use App\Http\Requests\IndexComptesRequest;
 use App\Http\Requests\UpdateCompteRequest;
 use App\Http\Requests\BloquerCompteRequest;
 use App\Http\Requests\DebloquerCompteRequest;
+use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -129,136 +130,155 @@ class CompteController extends Controller
      *     )
      * )
      */
-    public function index(IndexComptesRequest $request): JsonResponse
-    {
-        try {
-            // Test de connexion DB simple
-            $dbTest = DB::select('SELECT 1 as test');
-            if (!$dbTest) {
-                throw new \Exception('Connexion base de données échouée');
-            }
+ public function index(IndexComptesRequest $request): JsonResponse
+{
+    try {
+        // Récupérer l'utilisateur authentifié
+        $user = auth()->user();
 
-            // Test simple : compter les comptes
-            $totalComptes = Compte::count();
-
-            // Requête simplifiée pour éviter tous les problèmes
-            $query = Compte::select([
-                'id',
-                'numero_compte',
-                'client_id',
-                'type',
-                'solde',
-                'devise',
-                'statut',
-                'created_at'
-            ]);
-
-            // Filtres selon le rôle de l'utilisateur
-            $user = auth()->user();
-
-            // Vérifier si l'utilisateur est authentifié
-            if (!$user) {
-                Log::error('No authenticated user in comptes index');
-                return response()->json([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'UNAUTHENTICATED',
-                        'message' => 'Utilisateur non authentifié'
-                    ]
-                ], 401);
-            }
-
-            Log::info('User in comptes index', [
-                'user_id' => $user->id,
-                'user_type' => get_class($user),
-                'user_email' => $user->email,
-                'user_role' => $user->role ?? 'no_role'
-            ]);
-
-            if ($user instanceof Client) {
-                Log::info('Filtering for client', ['client_id' => $user->id]);
-                $query->where('client_id', $user->id);
-            } elseif ($user->role === 'admin' || get_class($user) === 'App\\Models\\Admin') {
-                Log::info('No filtering for admin');
-            } else {
-                Log::warning('Unknown user type', ['user_type' => get_class($user)]);
-            }
-
-            // IMPORTANT: Ne pas montrer les comptes bloqués ou supprimés
-            $query->whereNotIn('statut', ['bloque', 'ferme']);
-
-            // Tri simple
-            $query->orderBy('created_at', 'desc');
-
-            // Pagination simple
-            $comptes = $query->paginate(10);
-
-            // Formatage simplifié SANS jointure pour éviter les problèmes
-            $data = $comptes->getCollection()->map(function ($compte) {
-                // Récupération du client séparément pour éviter les erreurs de jointure
-                $client = null;
-                try {
-                    $client = \App\Models\Client::where('id', $compte->client_id)->first();
-                } catch (\Exception $e) {
-                    Log::warning('Erreur récupération client', [
-                        'compte_id' => $compte->id,
-                        'client_id' => $compte->client_id,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-
-                return [
-                    'id' => $compte->id,
-                    'numeroCompte' => $compte->numero_compte,
-                    'titulaire' => $client ? $client->titulaire : 'Client inconnu',
-                    'type' => $compte->type,
-                    'solde' => $compte->solde,
-                    'devise' => $compte->devise,
-                    'dateCreation' => $compte->created_at,
-                    'statut' => $compte->statut
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'data' => $data,
-                'pagination' => [
-                    'currentPage' => $comptes->currentPage(),
-                    'totalPages' => $comptes->lastPage(),
-                    'totalItems' => $comptes->total(),
-                    'itemsPerPage' => $comptes->perPage()
-                ],
-                'debug' => [
-                    'db_connection' => 'OK',
-                    'total_comptes_in_db' => $totalComptes,
-                    'comptes_returned' => count($data)
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Erreur dans CompteController@index', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => substr($e->getTraceAsString(), 0, 1000),
-                'db_config' => [
-                    'host' => config('database.connections.pgsql.host'),
-                    'database' => config('database.connections.pgsql.database'),
-                    'username' => config('database.connections.pgsql.username')
-                ]
-            ]);
-
+        // Vérifier si l'utilisateur est authentifié
+        if (!$user) {
+            Log::error('No authenticated user in comptes index');
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'INTERNAL_ERROR',
-                    'message' => 'Erreur: ' . $e->getMessage(),
-                    'file' => basename($e->getFile()) . ':' . $e->getLine(),
-                    'db_test' => DB::select('SELECT 1 as test') ? 'OK' : 'FAILED'
+                    'code' => 'UNAUTHENTICATED',
+                    'message' => 'Utilisateur non authentifié'
                 ]
-            ], 500);
+            ], 401);
         }
+
+        // Logs de diagnostic
+        Log::info('User accessing comptes index', [
+            'user_id' => $user->id,
+            'user_type' => get_class($user),
+            'user_email' => $user->email,
+            'is_client' => $user instanceof Client,
+            'is_admin' => $user instanceof Admin,
+            'user_role' => $user->role ?? 'no_role'
+        ]);
+
+        // Construire la requête de base
+        $query = Compte::select([
+            'id',
+            'numero_compte',
+            'client_id',
+            'type',
+            'solde',
+            'devise',
+            'statut',
+            'created_at'
+        ]);
+
+        // Filtrer selon le type d'utilisateur
+        if ($user instanceof Client) {
+            Log::info('Filtering comptes for client', [
+                'client_id' => $user->id,
+                'client_email' => $user->email
+            ]);
+            
+            // Vérifier combien de comptes ce client a AVANT filtrage
+            $totalComptesClient = Compte::where('client_id', $user->id)->count();
+            Log::info('Total comptes for this client (before filters)', [
+                'count' => $totalComptesClient
+            ]);
+            
+            $query->where('client_id', $user->id);
+        } 
+        elseif ($user instanceof Admin || (isset($user->role) && $user->role === 'admin')) {
+            Log::info('Admin accessing all comptes - no filtering');
+            // Pas de filtre pour l'admin
+        } 
+        else {
+            Log::error('Unknown user type cannot access comptes', [
+                'user_type' => get_class($user),
+                'user_id' => $user->id
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'ACCESS_DENIED',
+                    'message' => 'Type d\'utilisateur non autorisé'
+                ]
+            ], 403);
+        }
+
+        // Appliquer les filtres (statut, type, etc.)
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->has('statut')) {
+            $query->where('statut', $request->statut);
+        } else {
+            // Par défaut, ne montrer QUE les comptes actifs
+            $query->where('statut', 'actif');
+        }
+
+        // Compter les résultats avant pagination
+        $totalResults = $query->count();
+        Log::info('Comptes found after filters', ['count' => $totalResults]);
+
+        // Tri
+        $query->orderBy('created_at', 'desc');
+
+        // Pagination
+        $limit = min($request->input('limit', 10), 100);
+        $comptes = $query->paginate($limit);
+
+        // Formater les données
+        $data = $comptes->getCollection()->map(function ($compte) {
+            $client = null;
+            try {
+                $client = Client::find($compte->client_id);
+            } catch (\Exception $e) {
+                Log::warning('Could not load client for compte', [
+                    'compte_id' => $compte->id,
+                    'client_id' => $compte->client_id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            return [
+                'id' => $compte->id,
+                'numeroCompte' => $compte->numero_compte,
+                'titulaire' => $client ? $client->titulaire : 'Client inconnu',
+                'type' => $compte->type,
+                'solde' => number_format($compte->solde, 2, '.', ''),
+                'devise' => $compte->devise,
+                'dateCreation' => $compte->created_at->toIso8601String(),
+                'statut' => $compte->statut
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'pagination' => [
+                'currentPage' => $comptes->currentPage(),
+                'totalPages' => $comptes->lastPage(),
+                'totalItems' => $comptes->total(),
+                'itemsPerPage' => $comptes->perPage()
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error in CompteController@index', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'error' => [
+                'code' => 'INTERNAL_ERROR',
+                'message' => 'Une erreur interne s\'est produite'
+            ]
+        ], 500);
     }
+}
 
     /**
      * @OA\Get(
