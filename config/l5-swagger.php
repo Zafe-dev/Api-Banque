@@ -5,7 +5,7 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'API Banque Laravel',
+                'title' => 'Nouveau Titre API',
             ],
 
             'routes' => [
@@ -14,7 +14,7 @@ return [
             ],
             
             'paths' => [
-                'use_absolute_path' => env('L5_SWAGGER_USE_ABSOLUTE_PATH', false),
+                'use_absolute_path' => env('L5_SWAGGER_USE_ABSOLUTE_PATH', true),
                 'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
                 'docs_json' => 'api-docs.json',
                 'docs_yaml' => 'api-docs.yaml',
@@ -22,6 +22,7 @@ return [
                 'annotations' => [
                     base_path('app'),
                 ],
+                // ✅ CORRECTION ICI : Utiliser le nouveau domaine
                 'host' => env('L5_SWAGGER_HOST', 'https://seck-moustapha-sn.onrender.com'),
                 'base_path' => env('L5_SWAGGER_BASE_PATH', '/'),
             ],
@@ -96,6 +97,7 @@ return [
         ],
         
         'constants' => [
+            // ✅ CORRECTION ICI : Utiliser le nouveau domaine
             'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'https://seck-moustapha-sn.onrender.com'),
         ],
     ],

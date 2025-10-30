@@ -103,55 +103,9 @@ class CompteController extends Controller
      *         required=false,
      *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="✅ Liste des comptes récupérée",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Compte")
-     *             ),
-     *             @OA\Property(
-     *                 property="pagination",
-     *                 type="object",
-     *                 @OA\Property(property="total", type="integer", example=108),
-     *                 @OA\Property(property="perPage", type="integer", example=10),
-     *                 @OA\Property(property="currentPage", type="integer", example=1),
-     *                 @OA\Property(property="lastPage", type="integer", example=11)
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="❌ Non authentifié",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
-     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="🚫 Accès refusé",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
-     *                 @OA\Property(property="message", type="string", example="Type d'utilisateur non autorisé")
-     *             )
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="✅ Liste des comptes récupérée"),
+     *     @OA\Response(response=401, description="❌ Non authentifié"),
+     *     @OA\Response(response=403, description="🚫 Accès refusé")
      * )
      */
     public function index(Request $request): JsonResponse
@@ -242,57 +196,10 @@ class CompteController extends Controller
      *         description="ID du compte",
      *         @OA\Schema(type="string", example="550e8400-e29b-41d4-a716-446655440001")
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="✅ Détail du compte récupéré",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="❌ Non authentifié",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
-     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="🚫 Accès refusé",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
-     *                 @OA\Property(property="message", type="string", example="Vous n'avez pas accès à ce compte")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="🔍 Compte non trouvé",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="NOT_FOUND"),
-     *                 @OA\Property(property="message", type="string", example="Compte non trouvé")
-     *             )
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="✅ Détail du compte récupéré"),
+     *     @OA\Response(response=401, description="❌ Non authentifié"),
+     *     @OA\Response(response=403, description="🚫 Accès refusé"),
+     *     @OA\Response(response=404, description="🔍 Compte non trouvé")
      * )
      */
     public function show(Compte $compte): JsonResponse
@@ -350,58 +257,10 @@ class CompteController extends Controller
      *             @OA\Property(property="client", ref="#/components/schemas/ClientInput", description="Informations du client")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="✅ Compte créé avec succès",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte créé avec succès"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="❌ Non authentifié",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
-     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="🚫 Accès refusé - Admin seulement",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
-     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut créer un compte.")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="❌ Données invalides",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
-     *                 @OA\Property(property="message", type="string", example="Les données fournies sont invalides")
-     *             )
-     *         )
-     *     )
+     *     @OA\Response(response=201, description="✅ Compte créé avec succès"),
+     *     @OA\Response(response=401, description="❌ Non authentifié"),
+     *     @OA\Response(response=403, description="🚫 Accès refusé - Admin seulement"),
+     *     @OA\Response(response=422, description="❌ Données invalides")
      * )
      */
     public function store(StoreCompteRequest $request): JsonResponse
@@ -536,58 +395,10 @@ class CompteController extends Controller
      *             )
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="✅ Compte mis à jour",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte mis à jour avec succès"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="❌ Non authentifié",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
-     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="🚫 Accès refusé - Admin seulement",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
-     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut modifier un compte.")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="🔍 Compte non trouvé",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="NOT_FOUND"),
-     *                 @OA\Property(property="message", type="string", example="Compte non trouvé")
-     *             )
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="✅ Compte mis à jour"),
+     *     @OA\Response(response=401, description="❌ Non authentifié"),
+     *     @OA\Response(response=403, description="🚫 Accès refusé - Admin seulement"),
+     *     @OA\Response(response=404, description="🔍 Compte non trouvé")
      * )
      */
     public function update(UpdateCompteRequest $request, Compte $compte): JsonResponse
@@ -676,57 +487,10 @@ class CompteController extends Controller
      *         description="ID du compte",
      *         @OA\Schema(type="string", example="550e8400-e29b-41d4-a716-446655440001")
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="✅ Compte supprimé",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte supprimé avec succès")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="❌ Non authentifié",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
-     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="🚫 Accès refusé - Admin seulement",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
-     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut supprimer un compte.")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="🔍 Compte non trouvé",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="NOT_FOUND"),
-     *                 @OA\Property(property="message", type="string", example="Compte non trouvé")
-     *             )
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="✅ Compte supprimé"),
+     *     @OA\Response(response=401, description="❌ Non authentifié"),
+     *     @OA\Response(response=403, description="🚫 Accès refusé - Admin seulement"),
+     *     @OA\Response(response=404, description="🔍 Compte non trouvé")
      * )
      */
     public function destroy(Compte $compte): JsonResponse
@@ -803,58 +567,10 @@ class CompteController extends Controller
      *         required=true,
      *         @OA\JsonContent(ref="#/components/schemas/BlocageRequest")
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="✅ Compte bloqué",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte bloqué avec succès"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="❌ Impossible de bloquer",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="BLOCK_FAILED"),
-     *                 @OA\Property(property="message", type="string", example="Impossible de bloquer ce compte (doit être un compte épargne actif)")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="❌ Non authentifié",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
-     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="🚫 Accès refusé - Admin seulement",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
-     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut bloquer un compte.")
-     *             )
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="✅ Compte bloqué"),
+     *     @OA\Response(response=400, description="❌ Impossible de bloquer"),
+     *     @OA\Response(response=401, description="❌ Non authentifié"),
+     *     @OA\Response(response=403, description="🚫 Accès refusé - Admin seulement")
      * )
      */
     public function bloquer(BloquerCompteRequest $request, Compte $compte): JsonResponse
@@ -939,58 +655,10 @@ class CompteController extends Controller
      *             @OA\Property(property="motif", type="string", example="Blocage levé après vérification")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="✅ Compte débloqué",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Compte débloqué avec succès"),
-     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="❌ Impossible de débloquer",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="UNBLOCK_FAILED"),
-     *                 @OA\Property(property="message", type="string", example="Impossible de débloquer ce compte (doit être bloqué)")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="❌ Non authentifié",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
-     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="🚫 Accès refusé - Admin seulement",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(
-     *                 property="error",
-     *                 type="object",
-     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
-     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut débloquer un compte.")
-     *             )
-     *         )
-     *     )
+     *     @OA\Response(response=200, description="✅ Compte débloqué"),
+     *     @OA\Response(response=400, description="❌ Impossible de débloquer"),
+     *     @OA\Response(response=401, description="❌ Non authentifié"),
+     *     @OA\Response(response=403, description="🚫 Accès refusé - Admin seulement")
      * )
      */
     public function debloquer(DebloquerCompteRequest $request, Compte $compte): JsonResponse

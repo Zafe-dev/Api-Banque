@@ -13,7 +13,7 @@ use Laravel\Passport\Client as OClient;
 
 /**
  * @OA\Info(
- *     title="API Banque Laravel",
+ *     title="Nouveau Titre API",
  *     version="1.0.0",
  *     description="API REST complète pour la gestion bancaire - Comptes, Clients, Authentification",
  *     @OA\Contact(
