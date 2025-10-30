@@ -8,80 +8,293 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use App\Http\Requests\StoreCompteRequest;
+use App\Http\Requests\UpdateCompteRequest;
+use App\Http\Requests\BloquerCompteRequest;
+use App\Http\Requests\DebloquerCompteRequest;
+
+/**
+ * @OA\Schema(
+ *     schema="Compte",
+ *     type="object",
+ *     @OA\Property(property="id", type="string", example="550e8400-e29b-41d4-a716-446655440001"),
+ *     @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+ *     @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, example="epargne"),
+ *     @OA\Property(property="solde", type="number", format="float", example=100000.00),
+ *     @OA\Property(property="devise", type="string", example="FCFA"),
+ *     @OA\Property(property="statut", type="string", enum={"actif", "bloque", "ferme"}, example="actif"),
+ *     @OA\Property(property="titulaire", type="string", example="Fatou Sow"),
+ *     @OA\Property(property="createdAt", type="string", format="date-time", example="2025-10-29T04:00:00.000000Z")
+ * )
+ * @OA\Schema(
+ *     schema="ClientInput",
+ *     type="object",
+ *     @OA\Property(property="id", type="string", description="ID du client existant (optionnel)", example="550e8400-e29b-41d4-a716-446655440001"),
+ *     @OA\Property(property="titulaire", type="string", description="Nom du titulaire (requis si nouveau client)", example="Fatou Sow"),
+ *     @OA\Property(property="email", type="string", format="email", description="Email (requis si nouveau client)", example="fatou.sow@example.com"),
+ *     @OA\Property(property="telephone", type="string", description="Téléphone (requis si nouveau client)", example="+221782345678")
+ * )
+ * @OA\Schema(
+ *     schema="BlocageRequest",
+ *     type="object",
+ *     required={"motif", "duree", "unite"},
+ *     @OA\Property(property="motif", type="string", example="Suspicion de fraude"),
+ *     @OA\Property(property="duree", type="integer", example=30),
+ *     @OA\Property(property="unite", type="string", enum={"jours", "mois"}, example="jours")
+ * )
+ */
 
 class CompteController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/v1/comptes",
+     *     tags={"💳 Gestion des Comptes"},
+     *     summary="📋 Liste des comptes",
+     *     description="Récupère la liste des comptes selon le rôle de l'utilisateur. Admin voit tous les comptes actifs, client voit uniquement ses comptes actifs.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Numéro de page pour la pagination",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1, example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Nombre d'éléments par page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10, maximum=100, example=10)
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Filtrer par type de compte",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"epargne", "cheque"}, example="epargne")
+     *     ),
+     *     @OA\Parameter(
+     *         name="statut",
+     *         in="query",
+     *         description="Filtrer par statut",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"actif", "bloque", "ferme"}, example="actif")
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Rechercher par titulaire ou numéro de compte",
+     *         required=false,
+     *         @OA\Schema(type="string", example="Fatou")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         description="Champ de tri",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"dateCreation", "solde", "titulaire"}, example="solde")
+     *     ),
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="query",
+     *         description="Ordre de tri",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="✅ Liste des comptes récupérée",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Compte")
+     *             ),
+     *             @OA\Property(
+     *                 property="pagination",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer", example=108),
+     *                 @OA\Property(property="perPage", type="integer", example=10),
+     *                 @OA\Property(property="currentPage", type="integer", example=1),
+     *                 @OA\Property(property="lastPage", type="integer", example=11)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="❌ Non authentifié",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="🚫 Accès refusé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
+     *                 @OA\Property(property="message", type="string", example="Type d'utilisateur non autorisé")
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request): JsonResponse
-    {
-        try {
-            $user = auth()->user();
+{
+    try {
+        $user = auth()->user();
 
-            if (!$user) {
-                Log::error('No authenticated user in comptes index');
-                return response()->json([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'UNAUTHENTICATED',
-                        'message' => 'Utilisateur non authentifié'
-                    ]
-                ], 401);
-            }
-
-            Log::info('User accessing comptes index', [
-                'user_id' => $user->id,
-                'user_type' => get_class($user),
-                'user_email' => $user->email,
-                'role' => $user->role ?? 'no_role',
-                'is_admin' => $user instanceof \App\Models\Admin,
-                'is_client' => $user instanceof \App\Models\Client,
-                'is_user' => $user instanceof \App\Models\User,
-                'attributes' => $user->attributes ?? []
-            ]);
-
-            $query = Compte::with('client:id,titulaire');
-
-            if (($user->role ?? null) === 'client') {
-                $query->where('client_id', $user->id);
-                Log::info('Filtering comptes for client', ['client_id' => $user->id]);
-            } elseif (($user->role ?? null) === 'admin') {
-                Log::info('Admin accessing all comptes', ['user_id' => $user->id]);
-            } else {
-                Log::error('Unknown user type cannot access comptes', ['user_type' => get_class($user)]);
-                return response()->json([
-                    'success' => false,
-                    'error' => [
-                        'code' => 'ACCESS_DENIED',
-                        'message' => 'Type d\'utilisateur non autorisé'
-                    ]
-                ], 403);
-            }
-
-            if ($request->has('type')) $query->where('type', $request->type);
-            if ($request->has('statut')) $query->where('statut', $request->statut);
-            else $query->where('statut', 'actif');
-
-            $query->orderBy('created_at', 'desc');
-
-            $limit = min($request->input('limit', 10), 100);
-            $comptes = $query->paginate($limit);
-
-            return response()->json($this->formatPaginatedResponse($comptes));
-        } catch (\Exception $e) {
-            Log::error('Error in CompteController@index', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
+        if (!$user) {
+            Log::error('No authenticated user in comptes index');
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'INTERNAL_ERROR',
-                    'message' => 'Une erreur interne s\'est produite'
+                    'code' => 'UNAUTHENTICATED',
+                    'message' => 'Utilisateur non authentifié'
                 ]
-            ], 500);
+            ], 401);
         }
-    }
 
+        Log::info('User accessing comptes index', [
+            'user_id' => $user->id,
+            'user_type' => get_class($user),
+            'user_email' => $user->email,
+            'role' => $user->role ?? 'no_role',
+        ]);
+
+        $query = Compte::with('client:id,titulaire');
+
+        // Vérifier si c'est un admin (User model) ou un client (Client model)
+        $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+        $isClient = $user instanceof \App\Models\Client;
+
+        if ($isClient && !$isAdmin) {
+            // Client : voir uniquement ses comptes
+            $query->where('client_id', $user->id);
+            Log::info('Filtering comptes for client', ['client_id' => $user->id]);
+        } elseif ($isAdmin) {
+            // Admin : voir tous les comptes
+            Log::info('Admin accessing all comptes', ['user_id' => $user->id]);
+        } else {
+            Log::error('Unknown user type', ['user_type' => get_class($user), 'role' => $user->role ?? 'none']);
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'ACCESS_DENIED',
+                    'message' => 'Type d\'utilisateur non autorisé'
+                ]
+            ], 403);
+        }
+
+        if ($request->has('type')) $query->where('type', $request->type);
+        if ($request->has('statut')) $query->where('statut', $request->statut);
+        else $query->where('statut', 'actif');
+
+        $query->orderBy('created_at', 'desc');
+
+        $limit = min($request->input('limit', 10), 100);
+        $comptes = $query->paginate($limit);
+
+        return response()->json($this->formatPaginatedResponse($comptes));
+    } catch (\Exception $e) {
+        Log::error('Error in CompteController@index', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json([
+            'success' => false,
+            'error' => [
+                'code' => 'INTERNAL_ERROR',
+                'message' => 'Une erreur interne s\'est produite'
+            ]
+        ], 500);
+    }
+}
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/comptes/{compte}",
+     *     tags={"💳 Gestion des Comptes"},
+     *     summary="👁️ Détail d'un compte",
+     *     description="Récupère les informations détaillées d'un compte spécifique. Les clients ne peuvent voir que leurs propres comptes.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="compte",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", example="550e8400-e29b-41d4-a716-446655440001")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="✅ Détail du compte récupéré",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="❌ Non authentifié",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="🚫 Accès refusé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
+     *                 @OA\Property(property="message", type="string", example="Vous n'avez pas accès à ce compte")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="🔍 Compte non trouvé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="NOT_FOUND"),
+     *                 @OA\Property(property="message", type="string", example="Compte non trouvé")
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function show(Compte $compte): JsonResponse
     {
         try {
@@ -119,11 +332,116 @@ class CompteController extends Controller
         }
     }
 
-    public function store(Request $request): JsonResponse
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes",
+     *     tags={"💳 Gestion des Comptes"},
+     *     summary="➕ Créer un compte",
+     *     description="Crée un nouveau compte bancaire avec un client existant ou nouveau (Admin seulement)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             required={"type", "soldeInitial", "devise", "client"},
+     *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, example="epargne", description="Type de compte"),
+     *             @OA\Property(property="soldeInitial", type="number", format="float", example=50000, description="Solde initial du compte"),
+     *             @OA\Property(property="devise", type="string", example="FCFA", description="Devise du compte"),
+     *             @OA\Property(property="client", ref="#/components/schemas/ClientInput", description="Informations du client")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="✅ Compte créé avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte créé avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="❌ Non authentifié",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="🚫 Accès refusé - Admin seulement",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
+     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut créer un compte.")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="❌ Données invalides",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Les données fournies sont invalides")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function store(StoreCompteRequest $request): JsonResponse
     {
         try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in store method');
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'UNAUTHENTICATED',
+                        'message' => 'Utilisateur non authentifié'
+                    ]
+                ], 401);
+            }
+
+            // Vérifier que c'est un admin
+            $isAdmin = ($user->role === 'admin');
+            if (!$isAdmin) {
+                Log::warning('Non-admin user attempting to create compte', ['user_id' => $user->id, 'user_type' => get_class($user), 'user_role' => $user->role]);
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'ACCESS_DENIED',
+                        'message' => 'Accès refusé. Seul un administrateur peut créer un compte.'
+                    ]
+                ], 403);
+            }
+
+            Log::info('Admin creating compte', [
+                'admin_id' => $user->id,
+                'data' => $request->all()
+            ]);
+
+            // Créer ou récupérer le client
             $client = $this->getOrCreateClient($request->client);
 
+            // Créer le compte pour ce client
             $compte = new Compte();
             $compte->client_id = $client->id;
             $compte->type = $request->type;
@@ -134,17 +452,24 @@ class CompteController extends Controller
 
             Cache::forget("compte_{$compte->id}");
 
+            $formattedData = $this->formatCompteData($compte->load('client:id,titulaire'));
+
             return response()->json([
-                'success'=>true,
-                'message'=>'Compte créé avec succès',
-                'data'=>$this->formatCompteData($compte->load('client:id,titulaire'))
-            ],201);
+                'success' => true,
+                'message' => 'Compte créé avec succès',
+                'data' => $formattedData
+            ], 201);
         } catch (\Exception $e) {
-            Log::error('Error in CompteController@store',['message'=>$e->getMessage()]);
+            Log::error('Error in CompteController@store', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
-                'success'=>false,
-                'error'=>['code'=>'CREATION_FAILED','message'=>'Erreur lors de la création du compte']
-            ],500);
+                'success' => false,
+                'error' => ['code' => 'CREATION_FAILED', 'message' => 'Erreur lors de la création du compte']
+            ], 500);
         }
     }
 
@@ -152,10 +477,15 @@ class CompteController extends Controller
     {
         if (!empty($clientData['id'])) return Client::findOrFail($clientData['id']);
 
-        $client = new Client();
-        $client->titulaire = $clientData['titulaire'] ?? 'Nom Inconnu';
-        $client->email = $clientData['email'] ?? null;
-        $client->telephone = $clientData['telephone'] ?? null;
+        $client = new Client([
+            'id' => (string) Str::uuid(), // Générer un UUID pour l'id
+            'titulaire' => $clientData['titulaire'] ?? 'Nom Inconnu',
+            'email' => $clientData['email'] ?? null,
+            'telephone' => $clientData['telephone'] ?? null,
+            'role' => 'client', // Définir le rôle par défaut
+            'password' => bcrypt('password123'), // Mot de passe par défaut
+            'code' => rand(100000, 999999), // Générer un code aléatoire
+        ]);
         $client->save();
 
         return $client;
@@ -173,6 +503,552 @@ class CompteController extends Controller
             'titulaire' => $compte->client->titulaire ?? null,
             'createdAt' => $compte->created_at->format('Y-m-d H:i:s')
         ];
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/v1/comptes/{compte}",
+     *     tags={"💳 Gestion des Comptes"},
+     *     summary="✏️ Mettre à jour un compte",
+     *     description="Modifie les informations d'un compte et/ou de son titulaire (Admin seulement)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="compte",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", example="550e8400-e29b-41d4-a716-446655440001")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, example="epargne"),
+     *             @OA\Property(property="solde", type="number", format="float", example=75000),
+     *             @OA\Property(property="devise", type="string", example="FCFA"),
+     *             @OA\Property(property="statut", type="string", enum={"actif", "bloque", "ferme"}, example="actif"),
+     *             @OA\Property(property="titulaire", type="string", example="Nouveau Nom du Titulaire"),
+     *             @OA\Property(
+     *                 property="informationsClient",
+     *                 type="object",
+     *                 @OA\Property(property="telephone", type="string", example="+221778765432"),
+     *                 @OA\Property(property="email", type="string", format="email", example="nouveau@email.com")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="✅ Compte mis à jour",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte mis à jour avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="❌ Non authentifié",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="🚫 Accès refusé - Admin seulement",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
+     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut modifier un compte.")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="🔍 Compte non trouvé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="NOT_FOUND"),
+     *                 @OA\Property(property="message", type="string", example="Compte non trouvé")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function update(UpdateCompteRequest $request, Compte $compte): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in update method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'Utilisateur non authentifié']
+                ], 401);
+            }
+
+            // Vérifier que c'est un admin
+            $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+            if (!$isAdmin) {
+                Log::warning('Non-admin user attempting to update compte', ['user_id' => $user->id, 'compte_id' => $compte->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Seul un administrateur peut modifier un compte']
+                ], 403);
+            }
+
+            Log::info('Admin updating compte', [
+                'admin_id' => $user->id,
+                'compte_id' => $compte->id,
+                'data' => $request->all()
+            ]);
+
+            // Mettre à jour les informations du client associé
+            $client = $compte->client;
+            if ($request->has('titulaire')) {
+                $client->titulaire = $request->titulaire;
+            }
+
+            $clientInfo = $request->input('informationsClient', []);
+            if (isset($clientInfo['telephone'])) {
+                $client->telephone = $clientInfo['telephone'];
+            }
+            if (isset($clientInfo['email'])) {
+                $client->email = $clientInfo['email'];
+            }
+            if (isset($clientInfo['password'])) {
+                $client->password = bcrypt($clientInfo['password']);
+            }
+            if (isset($clientInfo['nci'])) {
+                $client->nci = $clientInfo['nci'];
+            }
+
+            $client->save();
+
+            // Invalider le cache
+            Cache::forget("compte_{$compte->id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte mis à jour avec succès',
+                'data' => $this->formatCompteData($compte->load('client:id,titulaire'))
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@update', [
+                'message' => $e->getMessage(),
+                'compte_id' => $compte->id ?? null
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'UPDATE_FAILED', 'message' => 'Erreur lors de la mise à jour du compte']
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/comptes/{compte}",
+     *     tags={"💳 Gestion des Comptes"},
+     *     summary="🗑️ Supprimer un compte",
+     *     description="Supprime un compte (soft delete - Admin seulement)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="compte",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", example="550e8400-e29b-41d4-a716-446655440001")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="✅ Compte supprimé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte supprimé avec succès")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="❌ Non authentifié",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="🚫 Accès refusé - Admin seulement",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
+     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut supprimer un compte.")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="🔍 Compte non trouvé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="NOT_FOUND"),
+     *                 @OA\Property(property="message", type="string", example="Compte non trouvé")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function destroy(Compte $compte): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in destroy method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'Utilisateur non authentifié']
+                ], 401);
+            }
+
+            // Vérifier que c'est un admin
+            $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+            if (!$isAdmin) {
+                Log::warning('Non-admin user attempting to delete compte', ['user_id' => $user->id, 'compte_id' => $compte->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Seul un administrateur peut supprimer un compte']
+                ], 403);
+            }
+
+            Log::info('Admin deleting compte', [
+                'admin_id' => $user->id,
+                'compte_id' => $compte->id
+            ]);
+
+            // Fermer le compte (soft delete)
+            if (!$compte->fermer()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'DELETE_FAILED', 'message' => 'Impossible de supprimer ce compte']
+                ], 400);
+            }
+
+            // Invalider le cache
+            Cache::forget("compte_{$compte->id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte supprimé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@destroy', [
+                'message' => $e->getMessage(),
+                'compte_id' => $compte->id ?? null
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'DELETE_FAILED', 'message' => 'Erreur lors de la suppression du compte']
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes/{compte}/bloquer",
+     *     tags={"💳 Gestion des Comptes"},
+     *     summary="🚫 Bloquer un compte",
+     *     description="Bloque un compte épargne pour une durée déterminée (Admin seulement)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="compte",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", example="550e8400-e29b-41d4-a716-446655440001")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/BlocageRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="✅ Compte bloqué",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte bloqué avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="❌ Impossible de bloquer",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="BLOCK_FAILED"),
+     *                 @OA\Property(property="message", type="string", example="Impossible de bloquer ce compte (doit être un compte épargne actif)")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="❌ Non authentifié",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="🚫 Accès refusé - Admin seulement",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
+     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut bloquer un compte.")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function bloquer(BloquerCompteRequest $request, Compte $compte): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in bloquer method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'Utilisateur non authentifié']
+                ], 401);
+            }
+
+            // Vérifier que c'est un admin
+            $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+            if (!$isAdmin) {
+                Log::warning('Non-admin user attempting to block compte', ['user_id' => $user->id, 'compte_id' => $compte->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Seul un administrateur peut bloquer un compte']
+                ], 403);
+            }
+
+            Log::info('Admin blocking compte', [
+                'admin_id' => $user->id,
+                'compte_id' => $compte->id,
+                'motif' => $request->motif,
+                'duree' => $request->duree,
+                'unite' => $request->unite
+            ]);
+
+            // Bloquer le compte
+            if (!$compte->bloquer($request->motif, $request->duree, $request->unite)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'BLOCK_FAILED', 'message' => 'Impossible de bloquer ce compte (doit être un compte épargne actif)']
+                ], 400);
+            }
+
+            // Invalider le cache
+            Cache::forget("compte_{$compte->id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte bloqué avec succès',
+                'data' => $this->formatCompteData($compte->load('client:id,titulaire'))
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@bloquer', [
+                'message' => $e->getMessage(),
+                'compte_id' => $compte->id ?? null
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'BLOCK_FAILED', 'message' => 'Erreur lors du blocage du compte']
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes/{compte}/debloquer",
+     *     tags={"💳 Gestion des Comptes"},
+     *     summary="✅ Débloquer un compte",
+     *     description="Remet un compte bloqué en statut actif (Admin seulement)",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="compte",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte",
+     *         @OA\Schema(type="string", example="550e8400-e29b-41d4-a716-446655440001")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             required={"motif"},
+     *             @OA\Property(property="motif", type="string", example="Blocage levé après vérification")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="✅ Compte débloqué",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte débloqué avec succès"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Compte")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="❌ Impossible de débloquer",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="UNBLOCK_FAILED"),
+     *                 @OA\Property(property="message", type="string", example="Impossible de débloquer ce compte (doit être bloqué)")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="❌ Non authentifié",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+     *                 @OA\Property(property="message", type="string", example="Utilisateur non authentifié")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="🚫 Accès refusé - Admin seulement",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="ACCESS_DENIED"),
+     *                 @OA\Property(property="message", type="string", example="Accès refusé. Seul un administrateur peut débloquer un compte.")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function debloquer(DebloquerCompteRequest $request, Compte $compte): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in debloquer method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'Utilisateur non authentifié']
+                ], 401);
+            }
+
+            // Vérifier que c'est un admin
+            $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
+            if (!$isAdmin) {
+                Log::warning('Non-admin user attempting to unblock compte', ['user_id' => $user->id, 'compte_id' => $compte->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Seul un administrateur peut débloquer un compte']
+                ], 403);
+            }
+
+            Log::info('Admin unblocking compte', [
+                'admin_id' => $user->id,
+                'compte_id' => $compte->id,
+                'motif' => $request->motif
+            ]);
+
+            // Débloquer le compte
+            if (!$compte->debloquer($request->motif)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNBLOCK_FAILED', 'message' => 'Impossible de débloquer ce compte (doit être bloqué)']
+                ], 400);
+            }
+
+            // Invalider le cache
+            Cache::forget("compte_{$compte->id}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte débloqué avec succès',
+                'data' => $this->formatCompteData($compte->load('client:id,titulaire'))
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@debloquer', [
+                'message' => $e->getMessage(),
+                'compte_id' => $compte->id ?? null
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'UNBLOCK_FAILED', 'message' => 'Erreur lors du déblocage du compte']
+            ], 500);
+        }
     }
 
     private function formatPaginatedResponse($paginatedData): array

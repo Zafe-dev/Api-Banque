@@ -170,10 +170,6 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-
-        /*
-         * Debugbar Service Provider (only in local environment)
-         */
     ])->toArray(),
 
     /*

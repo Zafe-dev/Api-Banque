@@ -26,6 +26,12 @@ class AppServiceProvider extends ServiceProvider
             return new \App\Providers\ApiUserProvider();
         });
 
+        // Forcer Passport à utiliser notre provider personnalisé
+        // \Laravel\Passport\Passport::useUserProvider(new \App\Providers\ApiUserProvider());
+
+        // Forcer Passport à utiliser notre provider personnalisé
+        // \Laravel\Passport\Passport::useUserProvider(new \App\Providers\ApiUserProvider());
+
         // Charger les clés Passport depuis les variables d'environnement si elles existent
         if (env('PASSPORT_PRIVATE_KEY') && env('PASSPORT_PUBLIC_KEY')) {
             file_put_contents(storage_path('oauth-private.key'), env('PASSPORT_PRIVATE_KEY'));

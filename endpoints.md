@@ -6,6 +6,18 @@
 
 ---
 
+## 📋 SOMMAIRE DES ENDPOINTS
+
+- ✅ **LISTE DES COMPTES** : Comptes actifs uniquement (bloqués/supprimés cachés)
+- ✅ **DÉTAIL COMPTE** : Informations complètes d'un compte
+- ✅ **MIS A JOUR COMPTE** : Modification des informations
+- ✅ **SUPPRIMER COMPTE** : Soft delete (admin seulement)
+- ✅ **CRÉER COMPTE** : Nouveau compte + client (admin seulement)
+- ✅ **BLOQUER COMPTE** : Épargne uniquement avec durée
+- ✅ **DÉBLOQUER COMPTE** : Remettre en actif
+- ✅ **ARCHIVER/DESARCHIVER** : Jobs automatiques
+
+---
 ## 🔐 AUTHENTIFICATION - ÉTAPE OBLIGATOIRE
 
 ### 📝 Connexion Admin
@@ -41,7 +53,7 @@ Accept: application/json
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
     "token_type": "Bearer",
     "expires_in": 3600
-  }
+  
 }
 ```
 
@@ -368,46 +380,249 @@ Accept: application/json
 
 ---
 
-## 🧪 TESTS RECOMMANDÉS
+## 🧪 GUIDE POSTMAN - TESTS COMPLÈTS
 
-### 1. **Test Authentification**
+### 📋 **COLLECTION POSTMAN À IMPORTER**
+
+```json
+{
+  "info": {
+    "name": "API Banque Laravel",
+    "description": "Collection complète pour tester l'API Banque"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
+```
+
+### 🔐 **1. AUTHENTIFICATION**
+
+#### **Connexion Admin**
+```
+Method: POST
+URL: {{base_url}}/auth/login
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+
+Body (raw JSON):
+{
+  "email": "admin1@banque.com",
+  "password": "admin123"
+}
+```
+
+#### **Connexion Client**
+```
+Method: POST
+URL: {{base_url}}/auth/login
+Headers:
+  Content-Type: application/json
+  Accept: application/json
+
+Body (raw JSON):
+{
+  "email": "fatou.sow@example.com",
+  "password": "password123",
+  "code": "DEF456"
+}
+```
+
+### 📋 **2. LISTE DES COMPTES**
+
+```
+Method: GET
+URL: {{base_url}}/comptes?page=1&limit=10
+Headers:
+  Authorization: Bearer {{token}}
+  Accept: application/json
+
+Tests (Postman):
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+pm.test("Response has success", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.success).to.eql(true);
+});
+pm.test("No blocked accounts shown", function () {
+    var jsonData = pm.response.json();
+    jsonData.data.forEach(function(compte) {
+        pm.expect(compte.statut).to.not.eql("bloque");
+        pm.expect(compte.statut).to.not.eql("ferme");
+    });
+});
+```
+
+### 👁️ **3. DÉTAIL COMPTE**
+
+```
+Method: GET
+URL: {{base_url}}/comptes/{compte_id}
+Headers:
+  Authorization: Bearer {{token}}
+  Accept: application/json
+
+Variables: compte_id = 550e8400-e29b-41d4-a716-446655440012
+```
+
+### ✏️ **4. MISE À JOUR COMPTE**
+
+```
+Method: PATCH
+URL: {{base_url}}/comptes/{compte_id}
+Headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  Accept: application/json
+
+Body (raw JSON):
+{
+  "solde": 3000000
+}
+
+Variables: compte_id = 550e8400-e29b-41d4-a716-446655440012
+```
+
+### 🚫 **5. BLOQUER COMPTE (Épargne uniquement)**
+
+```
+Method: POST
+URL: {{base_url}}/comptes/{compte_id}/bloquer
+Headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  Accept: application/json
+
+Body (raw JSON):
+{
+  "motif": "Test blocage automatique",
+  "duree": 7,
+  "unite": "jours"
+}
+
+Variables: compte_id = 550e8400-e29b-41d4-a716-446655440012
+```
+
+### ✅ **6. DÉBLOQUER COMPTE**
+
+```
+Method: POST
+URL: {{base_url}}/comptes/{compte_id}/debloquer
+Headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  Accept: application/json
+
+Body (raw JSON):
+{
+  "motif": "Test déblocage"
+}
+
+Variables: compte_id = 550e8400-e29b-41d4-a716-446655440012
+```
+
+### 🆕 **7. CRÉER COMPTE (Admin seulement)**
+
+```
+Method: POST
+URL: {{base_url}}/comptes
+Headers:
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+  Accept: application/json
+
+Body (raw JSON):
+{
+  "type": "epargne",
+  "soldeInitial": 50000,
+  "devise": "FCFA",
+  "client": {
+    "titulaire": "Nouveau Client Test",
+    "email": "nouveau$(date +%s)@test.com",
+    "telephone": "+221771234567"
+  }
+}
+```
+
+### 🗑️ **8. SUPPRIMER COMPTE (Admin seulement)**
+
+```
+Method: DELETE
+URL: {{base_url}}/comptes/{compte_id}
+Headers:
+  Authorization: Bearer {{token}}
+  Accept: application/json
+
+Variables: compte_id = {id_du_compte_cree}
+```
+
+### 🔄 **9. TESTS AVANCÉS**
+
+#### **Filtrage par type**
+```
+GET {{base_url}}/comptes?type=epargne
+Authorization: Bearer {{token}}
+```
+
+#### **Filtrage par statut**
+```
+GET {{base_url}}/comptes?statut=actif
+Authorization: Bearer {{token}}
+```
+
+#### **Recherche**
+```
+GET {{base_url}}/comptes?search=Fatou
+Authorization: Bearer {{token}}
+```
+
+#### **Tri**
+```
+GET {{base_url}}/comptes?sort=solde&order=desc
+Authorization: Bearer {{token}}
+```
+
+### 📊 **UTILISATEURS DE TEST**
+
+| Type | Email | Mot de passe | Code |
+|------|-------|--------------|------|
+| Admin | `admin1@banque.com` | `admin123` | - |
+| Client | `fatou.sow@example.com` | `password123` | `DEF456` |
+
+### ⚡ **COMMANDES CURL RAPIDES**
+
 ```bash
-# Login admin
-curl -X POST "https://seck-moustapha-sn.onrender.com/api/v1/auth/login" \
+# 1. Login Admin
+TOKEN=$(curl -s -X POST "http://127.0.0.1:8000/api/v1/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin1@banque.com","password":"admin123"}'
-```
+  -d '{"email":"admin1@banque.com","password":"admin123"}' | jq -r '.data.access_token')
 
-### 2. **Test Liste Comptes**
-```bash
-# Avec token admin
-curl -X GET "https://seck-moustapha-sn.onrender.com/api/v1/comptes" \
-  -H "Authorization: Bearer VOTRE_TOKEN"
-```
+# 2. Liste comptes
+curl -X GET "http://127.0.0.1:8000/api/v1/comptes" \
+  -H "Authorization: Bearer $TOKEN"
 
-### 3. **Test Filtrage**
-```bash
-# Comptes épargne actifs
-curl -X GET "https://seck-moustapha-sn.onrender.com/api/v1/comptes?type=epargne&statut=actif" \
-  -H "Authorization: Bearer VOTRE_TOKEN"
-```
-
-### 4. **Test CRUD**
-```bash
-# Créer compte
-curl -X POST "https://seck-moustapha-sn.onrender.com/api/v1/comptes" \
-  -H "Authorization: Bearer VOTRE_TOKEN" \
+# 3. Créer compte
+curl -X POST "http://127.0.0.1:8000/api/v1/comptes" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"type":"epargne","soldeInitial":100000,"devise":"FCFA","client":{"titulaire":"Test Client","email":"test@example.com","telephone":"+221771234567"}}'
-```
+  -d '{"type":"epargne","soldeInitial":100000,"devise":"FCFA","client":{"titulaire":"Test","email":"test@example.com","telephone":"+221771234567"}}'
 
-### 5. **Test Blocage (Épargne uniquement)**
-```bash
-# Bloquer compte épargne
-curl -X POST "https://seck-moustapha-sn.onrender.com/api/v1/comptes/{ID_COMPTE_EPARGNE}/bloquer" \
-  -H "Authorization: Bearer VOTRE_TOKEN" \
+# 4. Bloquer compte (remplacer ID)
+curl -X POST "http://127.0.0.1:8000/api/v1/comptes/{ID}/bloquer" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"motif":"Test blocage","duree":7,"unite":"jours"}'
+  -d '{"motif":"Test","duree":7,"unite":"jours"}'
 ```
 
 ---
@@ -433,3 +648,4 @@ curl -X POST "https://seck-moustapha-sn.onrender.com/api/v1/comptes/{ID_COMPTE_E
 **🎉 Votre API est maintenant complètement fonctionnelle en production !**
 
 **Testez tous les endpoints avec Postman ou curl pour valider le comportement.** 🚀
+

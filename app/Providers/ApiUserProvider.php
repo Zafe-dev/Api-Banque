@@ -18,25 +18,35 @@ class ApiUserProvider implements UserProvider
      */
     public function retrieveById($identifier): ?Authenticatable
     {
-        Log::info('Retrieving user by ID', ['id' => $identifier]);
-        
-        // Essayer d'abord de trouver dans les admins (table users)
-        $user = Admin::find($identifier);
-        if ($user) {
-            Log::info('Admin found by ID', ['id' => $identifier]);
-            $user->role = 'admin'; // Explicitement définir le rôle
-            return $user;
+        Log::info('Retrieving user by ID', ['id' => $identifier, 'type' => gettype($identifier)]);
+
+        // Convertir l'identifiant en string si c'est un UUID
+        $identifier = (string) $identifier;
+
+        // Déterminer si c'est un UUID ou un entier
+        $isUuid = preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $identifier);
+
+        if ($isUuid) {
+            // C'est un UUID, chercher dans les clients
+            Log::info('Looking for client with UUID', ['id' => $identifier]);
+            $client = Client::find($identifier);
+            if ($client) {
+                Log::info('Client found by UUID', ['id' => $identifier]);
+                $client->role = 'client';
+                return $client;
+            }
+        } else {
+            // C'est un entier, chercher dans les admins
+            Log::info('Looking for admin with integer ID', ['id' => $identifier]);
+            $user = Admin::find($identifier);
+            if ($user) {
+                Log::info('Admin found by integer ID', ['id' => $identifier]);
+                $user->role = 'admin';
+                return $user;
+            }
         }
 
-        // Sinon chercher dans les clients (table clients)
-        $client = Client::find($identifier);
-        if ($client) {
-            Log::info('Client found by ID', ['id' => $identifier]);
-            $client->role = 'client'; // Explicitement définir le rôle
-            return $client;
-        }
-
-        Log::warning('No user found by ID', ['id' => $identifier]);
+        Log::warning('No user found by ID', ['id' => $identifier, 'is_uuid' => $isUuid]);
         return null;
     }
 
