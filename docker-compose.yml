@@ -21,10 +21,11 @@ services:
       - DB_USERNAME=${DB_USERNAME:-banque_user}
       - DB_PASSWORD=${DB_PASSWORD}
 
-      - CACHE_DRIVER=redis
-      - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_PORT=6379
+      - CACHE_DRIVER=file
+      - SESSION_DRIVER=file
+      # - REDIS_HOST=redis
+      # - REDIS_PASSWORD=${REDIS_PASSWORD}
+      # - REDIS_PORT=6379
 
       - MAIL_MAILER=smtp
       - MAIL_HOST=smtp.gmail.com

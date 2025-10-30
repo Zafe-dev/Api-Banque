@@ -22,7 +22,7 @@ return [
                 'annotations' => [
                     base_path('app'),
                 ],
-                'host' => env('L5_SWAGGER_HOST', 'http://127.0.0.1:8000'),
+                'host' => env('L5_SWAGGER_HOST', 'https://moustapha-seck.onrender.com'),
                 'base_path' => env('L5_SWAGGER_BASE_PATH', '/'),
             ],
         ],
@@ -96,7 +96,7 @@ return [
         ],
         
         'constants' => [
-            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://127.0.0.1:8000'),
+            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'https://moustapha-seck.onrender.com'),
         ],
     ],
 ];
