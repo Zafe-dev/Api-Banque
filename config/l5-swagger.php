@@ -5,7 +5,7 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'API Banque Laravel',
+                'title' => 'Nouveau Titre API',
             ],
 
             'routes' => [

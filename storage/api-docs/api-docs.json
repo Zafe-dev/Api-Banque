@@ -1,7 +1,7 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "API Banque Laravel",
+        "title": "Nouveau Titre API",
         "description": "API REST complète pour la gestion bancaire - Comptes, Clients, Authentification",
         "contact": {
             "email": "contact@banque.com"
@@ -533,105 +533,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "✅ Liste des comptes récupérée",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Compte"
-                                            }
-                                        },
-                                        "pagination": {
-                                            "properties": {
-                                                "total": {
-                                                    "type": "integer",
-                                                    "example": 108
-                                                },
-                                                "perPage": {
-                                                    "type": "integer",
-                                                    "example": 10
-                                                },
-                                                "currentPage": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "lastPage": {
-                                                    "type": "integer",
-                                                    "example": 11
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "✅ Liste des comptes récupérée"
                     },
                     "401": {
-                        "description": "❌ Non authentifié",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "UNAUTHENTICATED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Utilisateur non authentifié"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Non authentifié"
                     },
                     "403": {
-                        "description": "🚫 Accès refusé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "ACCESS_DENIED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Type d'utilisateur non autorisé"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🚫 Accès refusé"
                     }
                 },
                 "security": [
@@ -690,114 +598,16 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "✅ Compte créé avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte créé avec succès"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Compte"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "✅ Compte créé avec succès"
                     },
                     "401": {
-                        "description": "❌ Non authentifié",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "UNAUTHENTICATED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Utilisateur non authentifié"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Non authentifié"
                     },
                     "403": {
-                        "description": "🚫 Accès refusé - Admin seulement",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "ACCESS_DENIED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Accès refusé. Seul un administrateur peut créer un compte."
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🚫 Accès refusé - Admin seulement"
                     },
                     "422": {
-                        "description": "❌ Données invalides",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "VALIDATION_ERROR"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Les données fournies sont invalides"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Données invalides"
                     }
                 },
                 "security": [
@@ -829,110 +639,16 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "✅ Détail du compte récupéré",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Compte"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "✅ Détail du compte récupéré"
                     },
                     "401": {
-                        "description": "❌ Non authentifié",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "UNAUTHENTICATED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Utilisateur non authentifié"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Non authentifié"
                     },
                     "403": {
-                        "description": "🚫 Accès refusé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "ACCESS_DENIED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Vous n'avez pas accès à ce compte"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🚫 Accès refusé"
                     },
                     "404": {
-                        "description": "🔍 Compte non trouvé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "NOT_FOUND"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Compte non trouvé"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🔍 Compte non trouvé"
                     }
                 },
                 "security": [
@@ -962,111 +678,16 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "✅ Compte supprimé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte supprimé avec succès"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "✅ Compte supprimé"
                     },
                     "401": {
-                        "description": "❌ Non authentifié",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "UNAUTHENTICATED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Utilisateur non authentifié"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Non authentifié"
                     },
                     "403": {
-                        "description": "🚫 Accès refusé - Admin seulement",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "ACCESS_DENIED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Accès refusé. Seul un administrateur peut supprimer un compte."
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🚫 Accès refusé - Admin seulement"
                     },
                     "404": {
-                        "description": "🔍 Compte non trouvé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "NOT_FOUND"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Compte non trouvé"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🔍 Compte non trouvé"
                     }
                 },
                 "security": [
@@ -1152,114 +773,16 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "✅ Compte mis à jour",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte mis à jour avec succès"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Compte"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "✅ Compte mis à jour"
                     },
                     "401": {
-                        "description": "❌ Non authentifié",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "UNAUTHENTICATED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Utilisateur non authentifié"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Non authentifié"
                     },
                     "403": {
-                        "description": "🚫 Accès refusé - Admin seulement",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "ACCESS_DENIED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Accès refusé. Seul un administrateur peut modifier un compte."
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🚫 Accès refusé - Admin seulement"
                     },
                     "404": {
-                        "description": "🔍 Compte non trouvé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "NOT_FOUND"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Compte non trouvé"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🔍 Compte non trouvé"
                     }
                 },
                 "security": [
@@ -1301,114 +824,16 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "✅ Compte bloqué",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte bloqué avec succès"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Compte"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "✅ Compte bloqué"
                     },
                     "400": {
-                        "description": "❌ Impossible de bloquer",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "BLOCK_FAILED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Impossible de bloquer ce compte (doit être un compte épargne actif)"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Impossible de bloquer"
                     },
                     "401": {
-                        "description": "❌ Non authentifié",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "UNAUTHENTICATED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Utilisateur non authentifié"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Non authentifié"
                     },
                     "403": {
-                        "description": "🚫 Accès refusé - Admin seulement",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "ACCESS_DENIED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Accès refusé. Seul un administrateur peut bloquer un compte."
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🚫 Accès refusé - Admin seulement"
                     }
                 },
                 "security": [
@@ -1459,114 +884,16 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "✅ Compte débloqué",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Compte débloqué avec succès"
-                                        },
-                                        "data": {
-                                            "$ref": "#/components/schemas/Compte"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "✅ Compte débloqué"
                     },
                     "400": {
-                        "description": "❌ Impossible de débloquer",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "UNBLOCK_FAILED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Impossible de débloquer ce compte (doit être bloqué)"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Impossible de débloquer"
                     },
                     "401": {
-                        "description": "❌ Non authentifié",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "UNAUTHENTICATED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Utilisateur non authentifié"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "❌ Non authentifié"
                     },
                     "403": {
-                        "description": "🚫 Accès refusé - Admin seulement",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "error": {
-                                            "properties": {
-                                                "code": {
-                                                    "type": "string",
-                                                    "example": "ACCESS_DENIED"
-                                                },
-                                                "message": {
-                                                    "type": "string",
-                                                    "example": "Accès refusé. Seul un administrateur peut débloquer un compte."
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "🚫 Accès refusé - Admin seulement"
                     }
                 },
                 "security": [
