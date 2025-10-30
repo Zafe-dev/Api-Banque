@@ -10,12 +10,15 @@
     },
     "servers": [
         {
-            "url": "https://moustapha-seck.onrender.com",
+            "url": "https://seck-moustapha-sn.onrender.com",
             "description": "Serveur de production"
         },
         {
             "url": "http://localhost:8000",
             "description": "Serveur de développement local"
+        },
+        {
+            "url": "/"
         }
     ],
     "paths": {

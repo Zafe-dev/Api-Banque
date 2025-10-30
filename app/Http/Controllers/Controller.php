@@ -8,7 +8,7 @@ use Illuminate\Routing\Controller as BaseController;
 
 /**
  * @OA\Server(
- *     url="https://moustapha-seck.onrender.com",
+ *     url="https://seck-moustapha-sn.onrender.com",
  *     description="Serveur de production"
  * )
  * @OA\Server(
