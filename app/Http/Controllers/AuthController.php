@@ -11,26 +11,37 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Laravel\Passport\Client as OClient;
 
+/**
+ * @OA\Info(
+ *     title="API Banque Laravel",
+ *     version="1.0.0",
+ *     description="API REST complète pour la gestion bancaire - Comptes, Clients, Authentification",
+ *     @OA\Contact(
+ *         email="contact@banque.com"
+ *     )
+ * )
+ */
+
 class AuthController extends Controller
 {
     /**
      * @OA\Post(
      *     path="/api/v1/auth/login",
-     *     tags={"Authentification"},
-     *     summary="Authentification utilisateur",
-     *     description="Authentification d'un admin ou d'un client avec génération de token JWT. Les admins n'ont pas besoin de code, les clients oui pour la première connexion.",
+     *     tags={" Authentification"},
+     *     summary=" Connexion utilisateur (Admin ou Client)",
+     *     description="Authentification d'un administrateur ou d'un client avec génération de token JWT. Les admins n'ont pas besoin de code, les clients oui pour la première connexion.",
      * @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             type="object",
      *             required={"email", "password"},
-     *             @OA\Property(property="email", type="string", format="email", example="admin@banque.com"),
-     *             @OA\Property(property="password", type="string", example="admin123")
+     *             @OA\Property(property="email", type="string", format="email", example="admin1@banque.com", description="Email de l'utilisateur"),
+     *             @OA\Property(property="password", type="string", example="admin123", description="Mot de passe"),
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Connexion réussie",
+     *         description=" Connexion réussie",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
@@ -41,13 +52,13 @@ class AuthController extends Controller
      *                 @OA\Property(
      *                     property="user",
      *                     type="object",
-     *                     @OA\Property(property="id", type="string"),
-     *                     @OA\Property(property="email", type="string"),
-     *                     @OA\Property(property="name", type="string", nullable=true),
-     *                     @OA\Property(property="titulaire", type="string", nullable=true),
-     *                     @OA\Property(property="telephone", type="string", nullable=true)
+     *                     @OA\Property(property="id", type="string", example="e8061d9e-1385-4fb9-849c-0bd2945fc49c"),
+     *                     @OA\Property(property="email", type="string", example="admin1@banque.com"),
+     *                     @OA\Property(property="name", type="string", nullable=true, example="Administrateur 1"),
+     *                     @OA\Property(property="titulaire", type="string", nullable=true, example="Fatou Sow"),
+     *                     @OA\Property(property="telephone", type="string", nullable=true, example="+221782345678")
      *                 ),
-     *                 @OA\Property(property="access_token", type="string"),
+     *                 @OA\Property(property="access_token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."),
      *                 @OA\Property(property="token_type", type="string", example="Bearer"),
      *                 @OA\Property(property="expires_in", type="integer", example=3600)
      *             )
@@ -55,7 +66,7 @@ class AuthController extends Controller
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Identifiants invalides",
+     *         description=" Identifiants invalides",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=false),
@@ -69,7 +80,7 @@ class AuthController extends Controller
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Code de vérification requis",
+     *         description=" Code de vérification requis",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=false),
@@ -154,7 +165,43 @@ class AuthController extends Controller
     }
 
     /**
-     * Rafraîchir le token d'accès
+     * @OA\Post(
+     *     path="/api/v1/auth/refresh",
+     *     tags={" Authentification"},
+     *     summary=" Rafraîchir le token d'accès",
+     *     description="Génère un nouveau token d'accès et révoque l'ancien",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description=" Token rafraîchi",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Token rafraîchi"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="access_token", type="string"),
+     *                 @OA\Property(property="token_type", type="string", example="Bearer"),
+     *                 @OA\Property(property="expires_in", type="integer", example=3600)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description=" Token invalide",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="UNAUTHENTICATED"),
+     *                 @OA\Property(property="message", type="string", example="Token invalide")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function refresh(Request $request): JsonResponse
     {
@@ -189,7 +236,22 @@ class AuthController extends Controller
     }
 
     /**
-     * Déconnexion
+     * @OA\Post(
+     *     path="/api/v1/auth/logout",
+     *     tags={" Authentification"},
+     *     summary=" Déconnexion",
+     *     description="Révoque le token d'accès actuel",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description=" Déconnexion réussie",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Déconnexion réussie")
+     *         )
+     *     )
+     * )
      */
     public function logout(Request $request): JsonResponse
     {
@@ -205,23 +267,23 @@ class AuthController extends Controller
     /**
      * @OA\Post(
      *     path="/api/v1/auth/register",
-     *     tags={"Authentification"},
-     *     summary="Inscription utilisateur",
-     *     description="Inscription d'un nouveau client",
-     * @OA\RequestBody(
+     *     tags={" Authentification"},
+     *     summary=" Inscription nouveau client",
+     *     description="Inscription d'un nouveau client avec génération automatique d'un code de vérification",
+     *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             type="object",
      *             required={"email", "password", "titulaire", "telephone"},
-     *             @OA\Property(property="email", type="string", format="email", example="client@banque.com"),
-     *             @OA\Property(property="password", type="string", example="password123"),
-     *             @OA\Property(property="titulaire", type="string", example="John Doe"),
-     *             @OA\Property(property="telephone", type="string", example="0123456789")
+     *             @OA\Property(property="email", type="string", format="email", example="nouveau.client@banque.com", description="Email unique du client"),
+     *             @OA\Property(property="password", type="string", minLength=8, example="password123", description="Mot de passe (minimum 8 caractères)"),
+     *             @OA\Property(property="titulaire", type="string", example="Fatou Sow", description="Nom complet du titulaire"),
+     *             @OA\Property(property="telephone", type="string", example="+221782345678", description="Numéro de téléphone")
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Inscription réussie",
+     *         description=" Inscription réussie",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=true),
@@ -232,17 +294,17 @@ class AuthController extends Controller
      *                 @OA\Property(
      *                     property="user",
      *                     type="object",
-     *                     @OA\Property(property="id", type="string"),
-     *                     @OA\Property(property="email", type="string"),
-     *                     @OA\Property(property="titulaire", type="string"),
-     *                     @OA\Property(property="telephone", type="string")
+     *                     @OA\Property(property="id", type="string", example="550e8400-e29b-41d4-a716-446655440001"),
+     *                     @OA\Property(property="email", type="string", example="nouveau.client@banque.com"),
+     *                     @OA\Property(property="titulaire", type="string", example="Fatou Sow"),
+     *                     @OA\Property(property="telephone", type="string", example="+221782345678")
      *                 )
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Erreur de validation",
+     *         description=" Erreur de validation",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="success", type="boolean", example=false),

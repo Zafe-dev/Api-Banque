@@ -27,9 +27,19 @@ return new class extends Migration
         // Copier les données existantes avec de nouveaux UUIDs
         DB::statement('INSERT INTO users_temp (id, name, email, email_verified_at, password, role, remember_token, created_at, updated_at) SELECT gen_random_uuid(), name, email, email_verified_at, password, role, remember_token, created_at, updated_at FROM users');
 
+        // Supprimer les contraintes de clés étrangères
+        Schema::table('comptes', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
+        });
+
         // Supprimer l'ancienne table et renommer la nouvelle
         Schema::dropIfExists('users');
         Schema::rename('users_temp', 'users');
+
+        // Recréer la clé étrangère
+        Schema::table('comptes', function (Blueprint $table) {
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+        });
     }
 
     /**

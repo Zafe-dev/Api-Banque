@@ -9,12 +9,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Supprimer d'abord la clé étrangère de comptes
-        Schema::table('comptes', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
-        });
-
         // Modifier la table users
         Schema::table('users', function (Blueprint $table) {
             // Ajouter une colonne uuid temporaire

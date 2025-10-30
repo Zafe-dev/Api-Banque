@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\CompteController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\WelcomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -10,22 +13,19 @@ use Illuminate\Support\Facades\DB;
 |--------------------------------------------------------------------------
 */
 
-// Route Sanctum par défaut (peut être supprimée si non utilisée)
+// Route Sanctum par défaut (si utilisée)
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Routes API versionnées
+// Routes versionnées v1
 Route::prefix('v1')->group(function () {
-    
+
     // ============================================
-    // ROUTES PUBLIQUES (sans authentification)
+    // ROUTES PUBLIQUES (pas d'authentification)
     // ============================================
-    
-    /**
-     * Route de diagnostic système
-     * Test: GET /api/v1/health
-     */
+
+    // Diagnostic système
     Route::get('/health', function () {
         $health = [
             'status' => 'ok',
@@ -41,12 +41,9 @@ Route::prefix('v1')->group(function () {
             'counts' => []
         ];
 
-        // Test connexion base de données
         try {
             DB::connection()->getPdo();
             $health['database'] = 'connected ✓';
-
-            // Compteurs
             $health['counts'] = [
                 'admins' => \App\Models\Admin::count(),
                 'clients' => \App\Models\Client::count(),
@@ -58,65 +55,54 @@ Route::prefix('v1')->group(function () {
             $health['database_error'] = $e->getMessage();
         }
 
-        // Vérifier les clés Passport
-        if (!$health['passport_keys']['private'] || !$health['passport_keys']['public']) {
-            $health['status'] = 'degraded';
-            $health['passport_warning'] = 'OAuth keys missing! Run: php artisan passport:keys';
-        }
-
         return response()->json($health);
     });
 
-    /**
-     * Route de bienvenue avec logging
-     * Test: GET /api/v1/welcome
-     */
-    Route::get('/welcome', [App\Http\Controllers\WelcomeController::class, 'welcome']);
+    // Route de bienvenue
+    Route::get('/welcome', [WelcomeController::class, 'welcome']);
 
-    /**
-     * Route de connexion
-     * Test: POST /api/v1/auth/login
-     */
-    Route::post('/auth/login', [App\Http\Controllers\AuthController::class, 'login']);
+    // Auth : login & register
+    Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/register', [AuthController::class, 'register']);
 
-    /**
-     * Route d'inscription
-     * Test: POST /api/v1/auth/register
-     */
-    Route::post('/auth/register', [App\Http\Controllers\AuthController::class, 'register']);
-
-    // Route de test publique pour debug
-    Route::get('/comptes/test', function () {
-        return response()->json(['message' => 'Route de test accessible']);
-    });
+    // Route de test d'authentification
+    Route::get('/auth/test', function () {
+        $user = auth()->user();
+        return response()->json([
+            'authenticated' => !is_null($user),
+            'user' => $user ? [
+                'id' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role ?? 'no_role',
+                'type' => get_class($user)
+            ] : null
+        ]);
+    })->middleware('auth:api');
 
     // ============================================
     // ROUTES PROTÉGÉES (authentification requise)
     // ============================================
 
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth:api'])->group(function () {
 
-        // Routes d'authentification
+        // Auth protégée
         Route::prefix('auth')->group(function () {
-            Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout']);
-            Route::post('/refresh', [App\Http\Controllers\AuthController::class, 'refresh']);
-            Route::get('/me', [App\Http\Controllers\AuthController::class, 'me']);
+            Route::post('/logout', [AuthController::class, 'logout']);
+            Route::post('/refresh', [AuthController::class, 'refresh']);
+            Route::get('/me', [AuthController::class, 'me']);
         });
 
-        // Routes des comptes (avec rate limiting et contrôle d'accès)
+        // Comptes protégés
         Route::middleware(['throttle:60,1'])->prefix('comptes')->group(function () {
-            // Liste et détails
-            Route::get('/', [App\Http\Controllers\CompteController::class, 'index']);
-            Route::get('/{compte}', [App\Http\Controllers\CompteController::class, 'show']);
-
-            // CRUD (admin only - à vérifier dans le controller)
-            Route::post('/', [App\Http\Controllers\CompteController::class, 'store']);
-            Route::patch('/{compte}', [App\Http\Controllers\CompteController::class, 'update']);
-            Route::delete('/{compte}', [App\Http\Controllers\CompteController::class, 'destroy']);
-
-            // Actions spéciales
-            Route::post('/{compte}/bloquer', [App\Http\Controllers\CompteController::class, 'bloquer']);
-            Route::post('/{compte}/debloquer', [App\Http\Controllers\CompteController::class, 'debloquer']);
+            Route::get('/', [CompteController::class, 'index']);       // liste tous les comptes
+            Route::post('/', [CompteController::class, 'store']);       // créer un compte (admin seulement)
+            Route::get('/{compte}', [CompteController::class, 'show']); // détail compte
+            Route::patch('/{compte}', [CompteController::class, 'update']);
+            Route::delete('/{compte}', [CompteController::class, 'destroy']);
+            Route::post('/{compte}/bloquer', [CompteController::class, 'bloquer']);
+            Route::post('/{compte}/debloquer', [CompteController::class, 'debloquer']);
         });
+
     });
+
 });

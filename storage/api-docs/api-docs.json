@@ -1,23 +1,14 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "API Banque - Documentation",
-        "description": "API RESTful pour la gestion des comptes bancaires",
+        "title": "API Banque Laravel",
+        "description": "API REST complète pour la gestion bancaire - Comptes, Clients, Authentification",
+        "contact": {
+            "email": "contact@banque.com"
+        },
         "version": "1.0.0"
     },
     "servers": [
-        {
-            "url": "http://127.0.0.1:8000",
-            "description": "Serveur local"
-        },
-        {
-            "url": "http://api.moustapha.seck.com",
-            "description": "Serveur de production"
-        },
-        {
-            "url": "https://moustapha-seck.onrender.com",
-            "description": "Serveur de production"
-        },
         {
             "url": "https://moustapha-seck.onrender.com",
             "description": "Serveur de production"
@@ -31,10 +22,10 @@
         "/api/v1/auth/login": {
             "post": {
                 "tags": [
-                    "Authentification"
+                    " Authentification"
                 ],
-                "summary": "Authentification utilisateur",
-                "description": "Authentification d'un admin ou d'un client avec génération de token JWT. Les admins n'ont pas besoin de code, les clients oui pour la première connexion.",
+                "summary": " Connexion utilisateur (Admin ou Client)",
+                "description": "Authentification d'un administrateur ou d'un client avec génération de token JWT. Les admins n'ont pas besoin de code, les clients oui pour la première connexion.",
                 "operationId": "5db09a35f965c6ca7529ed3c3cae8e21",
                 "requestBody": {
                     "required": true,
@@ -47,11 +38,13 @@
                                 ],
                                 "properties": {
                                     "email": {
+                                        "description": "Email de l'utilisateur",
                                         "type": "string",
                                         "format": "email",
-                                        "example": "admin@banque.com"
+                                        "example": "admin1@banque.com"
                                     },
                                     "password": {
+                                        "description": "Mot de passe",
                                         "type": "string",
                                         "example": "admin123"
                                     }
@@ -63,7 +56,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Connexion réussie",
+                        "description": " Connexion réussie",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -81,28 +74,34 @@
                                                 "user": {
                                                     "properties": {
                                                         "id": {
-                                                            "type": "string"
+                                                            "type": "string",
+                                                            "example": "e8061d9e-1385-4fb9-849c-0bd2945fc49c"
                                                         },
                                                         "email": {
-                                                            "type": "string"
+                                                            "type": "string",
+                                                            "example": "admin1@banque.com"
                                                         },
                                                         "name": {
                                                             "type": "string",
+                                                            "example": "Administrateur 1",
                                                             "nullable": true
                                                         },
                                                         "titulaire": {
                                                             "type": "string",
+                                                            "example": "Fatou Sow",
                                                             "nullable": true
                                                         },
                                                         "telephone": {
                                                             "type": "string",
+                                                            "example": "+221782345678",
                                                             "nullable": true
                                                         }
                                                     },
                                                     "type": "object"
                                                 },
                                                 "access_token": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
                                                 },
                                                 "token_type": {
                                                     "type": "string",
@@ -122,7 +121,7 @@
                         }
                     },
                     "401": {
-                        "description": "Identifiants invalides",
+                        "description": " Identifiants invalides",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -151,7 +150,7 @@
                         }
                     },
                     "403": {
-                        "description": "Code de vérification requis",
+                        "description": " Code de vérification requis",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -182,13 +181,132 @@
                 }
             }
         },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": [
+                    " Authentification"
+                ],
+                "summary": " Rafraîchir le token d'accès",
+                "description": "Génère un nouveau token d'accès et révoque l'ancien",
+                "operationId": "05bd0482845348cafa4da9e4fb7d0ffb",
+                "responses": {
+                    "200": {
+                        "description": " Token rafraîchi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token rafraîchi"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": " Token invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "UNAUTHENTICATED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Token invalide"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    " Authentification"
+                ],
+                "summary": " Déconnexion",
+                "description": "Révoque le token d'accès actuel",
+                "operationId": "8f1a443d39c3bf383f851fbb51253c64",
+                "responses": {
+                    "200": {
+                        "description": " Déconnexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Déconnexion réussie"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/auth/register": {
             "post": {
                 "tags": [
-                    "Authentification"
+                    " Authentification"
                 ],
-                "summary": "Inscription utilisateur",
-                "description": "Inscription d'un nouveau client",
+                "summary": " Inscription nouveau client",
+                "description": "Inscription d'un nouveau client avec génération automatique d'un code de vérification",
                 "operationId": "48e49e48019e8b141753cb515a26100b",
                 "requestBody": {
                     "required": true,
@@ -203,21 +321,26 @@
                                 ],
                                 "properties": {
                                     "email": {
+                                        "description": "Email unique du client",
                                         "type": "string",
                                         "format": "email",
-                                        "example": "client@banque.com"
+                                        "example": "nouveau.client@banque.com"
                                     },
                                     "password": {
+                                        "description": "Mot de passe (minimum 8 caractères)",
                                         "type": "string",
+                                        "minLength": 8,
                                         "example": "password123"
                                     },
                                     "titulaire": {
+                                        "description": "Nom complet du titulaire",
                                         "type": "string",
-                                        "example": "John Doe"
+                                        "example": "Fatou Sow"
                                     },
                                     "telephone": {
+                                        "description": "Numéro de téléphone",
                                         "type": "string",
-                                        "example": "0123456789"
+                                        "example": "+221782345678"
                                     }
                                 },
                                 "type": "object"
@@ -227,7 +350,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Inscription réussie",
+                        "description": " Inscription réussie",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -245,16 +368,20 @@
                                                 "user": {
                                                     "properties": {
                                                         "id": {
-                                                            "type": "string"
+                                                            "type": "string",
+                                                            "example": "550e8400-e29b-41d4-a716-446655440001"
                                                         },
                                                         "email": {
-                                                            "type": "string"
+                                                            "type": "string",
+                                                            "example": "nouveau.client@banque.com"
                                                         },
                                                         "titulaire": {
-                                                            "type": "string"
+                                                            "type": "string",
+                                                            "example": "Fatou Sow"
                                                         },
                                                         "telephone": {
-                                                            "type": "string"
+                                                            "type": "string",
+                                                            "example": "+221782345678"
                                                         }
                                                     },
                                                     "type": "object"
@@ -269,7 +396,7 @@
                         }
                     },
                     "422": {
-                        "description": "Erreur de validation",
+                        "description": " Erreur de validation",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -303,20 +430,21 @@
         "/api/v1/comptes": {
             "get": {
                 "tags": [
-                    "Comptes"
+                    "💳 Gestion des Comptes"
                 ],
-                "summary": "Lister tous les comptes",
-                "description": "Admin peut récupérer la liste de tous les comptes, Client peut récupérer la liste de ses comptes",
+                "summary": "📋 Liste des comptes",
+                "description": "Récupère la liste des comptes selon le rôle de l'utilisateur. Admin voit tous les comptes actifs, client voit uniquement ses comptes actifs.",
                 "operationId": "c09c55b936e3520140768760edfa911e",
                 "parameters": [
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Numéro de page",
+                        "description": "Numéro de page pour la pagination",
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "default": 1
+                            "default": 1,
+                            "example": 1
                         }
                     },
                     {
@@ -327,20 +455,22 @@
                         "schema": {
                             "type": "integer",
                             "default": 10,
-                            "maximum": 100
+                            "maximum": 100,
+                            "example": 10
                         }
                     },
                     {
                         "name": "type",
                         "in": "query",
-                        "description": "Filtrer par type",
+                        "description": "Filtrer par type de compte",
                         "required": false,
                         "schema": {
                             "type": "string",
                             "enum": [
                                 "epargne",
                                 "cheque"
-                            ]
+                            ],
+                            "example": "epargne"
                         }
                     },
                     {
@@ -354,22 +484,53 @@
                                 "actif",
                                 "bloque",
                                 "ferme"
-                            ]
+                            ],
+                            "example": "actif"
                         }
                     },
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Recherche par titulaire ou numéro",
+                        "description": "Rechercher par titulaire ou numéro de compte",
                         "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "Fatou"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Champ de tri",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "dateCreation",
+                                "solde",
+                                "titulaire"
+                            ],
+                            "example": "solde"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Ordre de tri",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "desc"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des comptes récupérée avec succès",
+                        "description": "✅ Liste des comptes récupérée",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -386,23 +547,21 @@
                                         },
                                         "pagination": {
                                             "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 108
+                                                },
+                                                "perPage": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
                                                 "currentPage": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "example": 1
                                                 },
-                                                "totalPages": {
-                                                    "type": "integer"
-                                                },
-                                                "totalItems": {
-                                                    "type": "integer"
-                                                },
-                                                "itemsPerPage": {
-                                                    "type": "integer"
-                                                },
-                                                "hasNext": {
-                                                    "type": "boolean"
-                                                },
-                                                "hasPrevious": {
-                                                    "type": "boolean"
+                                                "lastPage": {
+                                                    "type": "integer",
+                                                    "example": 11
                                                 }
                                             },
                                             "type": "object"
@@ -414,7 +573,62 @@
                         }
                     },
                     "401": {
-                        "description": "Non autorisé"
+                        "description": "❌ Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "UNAUTHENTICATED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Utilisateur non authentifié"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "🚫 Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "ACCESS_DENIED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Type d'utilisateur non autorisé"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -425,10 +639,10 @@
             },
             "post": {
                 "tags": [
-                    "Comptes"
+                    "💳 Gestion des Comptes"
                 ],
-                "summary": "Créer un nouveau compte",
-                "description": "Créer un nouveau compte bancaire avec génération automatique de numéro et client",
+                "summary": "➕ Créer un compte",
+                "description": "Crée un nouveau compte bancaire avec un client existant ou nouveau (Admin seulement)",
                 "operationId": "aa399240cc7c1f272aa92fe6d6b4e162",
                 "requestBody": {
                     "required": true,
@@ -443,46 +657,27 @@
                                 ],
                                 "properties": {
                                     "type": {
+                                        "description": "Type de compte",
                                         "type": "string",
                                         "enum": [
-                                            "cheque",
-                                            "epargne"
-                                        ]
+                                            "epargne",
+                                            "cheque"
+                                        ],
+                                        "example": "epargne"
                                     },
                                     "soldeInitial": {
+                                        "description": "Solde initial du compte",
                                         "type": "number",
-                                        "minimum": 10000
+                                        "format": "float",
+                                        "example": 50000
                                     },
                                     "devise": {
+                                        "description": "Devise du compte",
                                         "type": "string",
                                         "example": "FCFA"
                                     },
                                     "client": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "string",
-                                                "nullable": true
-                                            },
-                                            "titulaire": {
-                                                "type": "string"
-                                            },
-                                            "nci": {
-                                                "type": "string",
-                                                "nullable": true
-                                            },
-                                            "email": {
-                                                "type": "string",
-                                                "format": "email"
-                                            },
-                                            "telephone": {
-                                                "type": "string"
-                                            },
-                                            "adresse": {
-                                                "type": "string",
-                                                "nullable": true
-                                            }
-                                        },
-                                        "type": "object"
+                                        "$ref": "#/components/schemas/ClientInput"
                                     }
                                 },
                                 "type": "object"
@@ -492,7 +687,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Compte créé avec succès",
+                        "description": "✅ Compte créé avec succès",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -514,8 +709,66 @@
                             }
                         }
                     },
-                    "400": {
-                        "description": "Données invalides",
+                    "401": {
+                        "description": "❌ Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "UNAUTHENTICATED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Utilisateur non authentifié"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "🚫 Accès refusé - Admin seulement",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "ACCESS_DENIED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Accès refusé. Seul un administrateur peut créer un compte."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "❌ Données invalides",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -551,28 +804,29 @@
                 ]
             }
         },
-        "/api/v1/comptes/{compteId}": {
+        "/api/v1/comptes/{compte}": {
             "get": {
                 "tags": [
-                    "Comptes"
+                    "💳 Gestion des Comptes"
                 ],
-                "summary": "Récupérer un compte spécifique",
-                "description": "Admin peut récupérer un compte par ID, Client peut récupérer un de ses comptes par ID",
-                "operationId": "a850aaf9d25eae6f82bf59804b2a235e",
+                "summary": "👁️ Détail d'un compte",
+                "description": "Récupère les informations détaillées d'un compte spécifique. Les clients ne peuvent voir que leurs propres comptes.",
+                "operationId": "6cc275e16c94b0f4fbaa679a5a88c024",
                 "parameters": [
                     {
-                        "name": "compteId",
+                        "name": "compte",
                         "in": "path",
                         "description": "ID du compte",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "550e8400-e29b-41d4-a716-446655440001"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Détails du compte récupérés avec succès",
+                        "description": "✅ Détail du compte récupéré",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -590,8 +844,8 @@
                             }
                         }
                     },
-                    "404": {
-                        "description": "Compte non trouvé",
+                    "401": {
+                        "description": "❌ Non authentifié",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -604,11 +858,11 @@
                                             "properties": {
                                                 "code": {
                                                     "type": "string",
-                                                    "example": "COMPTE_NOT_FOUND"
+                                                    "example": "UNAUTHENTICATED"
                                                 },
                                                 "message": {
                                                     "type": "string",
-                                                    "example": "Le compte avec l'ID spécifié n'existe pas"
+                                                    "example": "Utilisateur non authentifié"
                                                 }
                                             },
                                             "type": "object"
@@ -620,7 +874,62 @@
                         }
                     },
                     "403": {
-                        "description": "Accès refusé"
+                        "description": "🚫 Accès refusé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "ACCESS_DENIED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Vous n'avez pas accès à ce compte"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "🔍 Compte non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "NOT_FOUND"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Compte non trouvé"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -631,25 +940,26 @@
             },
             "delete": {
                 "tags": [
-                    "Comptes"
+                    "💳 Gestion des Comptes"
                 ],
-                "summary": "Supprimer un compte",
-                "description": "Supprimer un compte (soft delete)",
-                "operationId": "7bc9431c9cb3f6c5524d461a5b8d2389",
+                "summary": "🗑️ Supprimer un compte",
+                "description": "Supprime un compte (soft delete - Admin seulement)",
+                "operationId": "8d5cc7a1615f764ffa62bac743ca01fc",
                 "parameters": [
                     {
-                        "name": "compteId",
+                        "name": "compte",
                         "in": "path",
                         "description": "ID du compte",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "550e8400-e29b-41d4-a716-446655440001"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Compte supprimé avec succès",
+                        "description": "✅ Compte supprimé",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -661,22 +971,90 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Compte supprimé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "❌ Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
                                         },
-                                        "data": {
+                                        "error": {
                                             "properties": {
-                                                "id": {
-                                                    "type": "string"
-                                                },
-                                                "numeroCompte": {
-                                                    "type": "string"
-                                                },
-                                                "statut": {
+                                                "code": {
                                                     "type": "string",
-                                                    "example": "ferme"
+                                                    "example": "UNAUTHENTICATED"
                                                 },
-                                                "dateFermeture": {
+                                                "message": {
                                                     "type": "string",
-                                                    "format": "date-time"
+                                                    "example": "Utilisateur non authentifié"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "🚫 Accès refusé - Admin seulement",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "ACCESS_DENIED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Accès refusé. Seul un administrateur peut supprimer un compte."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "🔍 Compte non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "NOT_FOUND"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Compte non trouvé"
                                                 }
                                             },
                                             "type": "object"
@@ -696,19 +1074,20 @@
             },
             "patch": {
                 "tags": [
-                    "Comptes"
+                    "💳 Gestion des Comptes"
                 ],
-                "summary": "Mettre à jour les informations du client",
-                "description": "Mettre à jour les informations du client associé au compte",
-                "operationId": "53945335c65ff02b87b04b21ad40d816",
+                "summary": "✏️ Mettre à jour un compte",
+                "description": "Modifie les informations d'un compte et/ou de son titulaire (Admin seulement)",
+                "operationId": "b93ab2fd6c7f8f345023be784ad8328b",
                 "parameters": [
                     {
-                        "name": "compteId",
+                        "name": "compte",
                         "in": "path",
                         "description": "ID du compte",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "550e8400-e29b-41d4-a716-446655440001"
                         }
                     }
                 ],
@@ -718,32 +1097,49 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "epargne",
+                                            "cheque"
+                                        ],
+                                        "example": "epargne"
+                                    },
+                                    "solde": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 75000
+                                    },
+                                    "devise": {
+                                        "type": "string",
+                                        "example": "FCFA"
+                                    },
+                                    "statut": {
+                                        "type": "string",
+                                        "enum": [
+                                            "actif",
+                                            "bloque",
+                                            "ferme"
+                                        ],
+                                        "example": "actif"
+                                    },
                                     "titulaire": {
                                         "type": "string",
-                                        "nullable": true
+                                        "example": "Nouveau Nom du Titulaire"
                                     },
                                     "informationsClient": {
                                         "properties": {
                                             "telephone": {
                                                 "type": "string",
-                                                "nullable": true
+                                                "example": "+221778765432"
                                             },
                                             "email": {
                                                 "type": "string",
                                                 "format": "email",
-                                                "nullable": true
-                                            },
-                                            "password": {
-                                                "type": "string",
-                                                "nullable": true
-                                            },
-                                            "nci": {
-                                                "type": "string",
-                                                "nullable": true
+                                                "example": "nouveau@email.com"
                                             }
                                         },
-                                        "type": "object",
-                                        "nullable": true
+                                        "type": "object"
                                     }
                                 },
                                 "type": "object"
@@ -753,7 +1149,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Informations mises à jour avec succès",
+                        "description": "✅ Compte mis à jour",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -774,6 +1170,93 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "❌ Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "UNAUTHENTICATED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Utilisateur non authentifié"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "🚫 Accès refusé - Admin seulement",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "ACCESS_DENIED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Accès refusé. Seul un administrateur peut modifier un compte."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "🔍 Compte non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "NOT_FOUND"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Compte non trouvé"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -783,22 +1266,23 @@
                 ]
             }
         },
-        "/api/v1/comptes/{compteId}/bloquer": {
+        "/api/v1/comptes/{compte}/bloquer": {
             "post": {
                 "tags": [
-                    "Comptes"
+                    "💳 Gestion des Comptes"
                 ],
-                "summary": "Bloquer un compte",
-                "description": "Bloquer un compte épargne actif",
-                "operationId": "fe2f6141c450b39f7be6854c72d7fb95",
+                "summary": "🚫 Bloquer un compte",
+                "description": "Bloque un compte épargne pour une durée déterminée (Admin seulement)",
+                "operationId": "3f7890e2dfe682647db73c13ac149934",
                 "parameters": [
                     {
-                        "name": "compteId",
+                        "name": "compte",
                         "in": "path",
                         "description": "ID du compte",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "550e8400-e29b-41d4-a716-446655440001"
                         }
                     }
                 ],
@@ -807,37 +1291,14 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "motif",
-                                    "duree",
-                                    "unite"
-                                ],
-                                "properties": {
-                                    "motif": {
-                                        "type": "string",
-                                        "maxLength": 500
-                                    },
-                                    "duree": {
-                                        "type": "integer",
-                                        "maximum": 365,
-                                        "minimum": 1
-                                    },
-                                    "unite": {
-                                        "type": "string",
-                                        "enum": [
-                                            "jours",
-                                            "mois"
-                                        ]
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/BlocageRequest"
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Compte bloqué avec succès",
+                        "description": "✅ Compte bloqué",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -858,6 +1319,93 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "❌ Impossible de bloquer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "BLOCK_FAILED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Impossible de bloquer ce compte (doit être un compte épargne actif)"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "❌ Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "UNAUTHENTICATED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Utilisateur non authentifié"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "🚫 Accès refusé - Admin seulement",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "ACCESS_DENIED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Accès refusé. Seul un administrateur peut bloquer un compte."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -867,22 +1415,23 @@
                 ]
             }
         },
-        "/api/v1/comptes/{compteId}/debloquer": {
+        "/api/v1/comptes/{compte}/debloquer": {
             "post": {
                 "tags": [
-                    "Comptes"
+                    "💳 Gestion des Comptes"
                 ],
-                "summary": "Débloquer un compte",
-                "description": "Débloquer un compte bloqué",
-                "operationId": "a585e7d82c49b1874a1ea26016856c09",
+                "summary": "✅ Débloquer un compte",
+                "description": "Remet un compte bloqué en statut actif (Admin seulement)",
+                "operationId": "eae05905368baf99959e755e19866793",
                 "parameters": [
                     {
-                        "name": "compteId",
+                        "name": "compte",
                         "in": "path",
                         "description": "ID du compte",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "550e8400-e29b-41d4-a716-446655440001"
                         }
                     }
                 ],
@@ -897,7 +1446,7 @@
                                 "properties": {
                                     "motif": {
                                         "type": "string",
-                                        "maxLength": 500
+                                        "example": "Blocage levé après vérification"
                                     }
                                 },
                                 "type": "object"
@@ -907,7 +1456,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Compte débloqué avec succès",
+                        "description": "✅ Compte débloqué",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -922,6 +1471,93 @@
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/Compte"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "❌ Impossible de débloquer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "UNBLOCK_FAILED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Impossible de débloquer ce compte (doit être bloqué)"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "❌ Non authentifié",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "UNAUTHENTICATED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Utilisateur non authentifié"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "🚫 Accès refusé - Admin seulement",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "ACCESS_DENIED"
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Accès refusé. Seul un administrateur peut débloquer un compte."
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -972,34 +1608,28 @@
                 "properties": {
                     "id": {
                         "type": "string",
-                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                        "example": "550e8400-e29b-41d4-a716-446655440001"
                     },
                     "numeroCompte": {
                         "type": "string",
                         "example": "C00123456"
-                    },
-                    "titulaire": {
-                        "type": "string",
-                        "example": "Amadou Diallo"
                     },
                     "type": {
                         "type": "string",
                         "enum": [
                             "epargne",
                             "cheque"
-                        ]
+                        ],
+                        "example": "epargne"
                     },
                     "solde": {
                         "type": "number",
-                        "example": 1250000
+                        "format": "float",
+                        "example": 100000
                     },
                     "devise": {
                         "type": "string",
                         "example": "FCFA"
-                    },
-                    "dateCreation": {
-                        "type": "string",
-                        "format": "date-time"
                     },
                     "statut": {
                         "type": "string",
@@ -1007,24 +1637,69 @@
                             "actif",
                             "bloque",
                             "ferme"
-                        ]
+                        ],
+                        "example": "actif"
                     },
-                    "motifBlocage": {
+                    "titulaire": {
                         "type": "string",
-                        "nullable": true
+                        "example": "Fatou Sow"
                     },
-                    "metadata": {
-                        "properties": {
-                            "derniereModification": {
-                                "type": "string",
-                                "format": "date-time"
-                            },
-                            "version": {
-                                "type": "integer",
-                                "example": 1
-                            }
-                        },
-                        "type": "object"
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-29T04:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "ClientInput": {
+                "properties": {
+                    "id": {
+                        "description": "ID du client existant (optionnel)",
+                        "type": "string",
+                        "example": "550e8400-e29b-41d4-a716-446655440001"
+                    },
+                    "titulaire": {
+                        "description": "Nom du titulaire (requis si nouveau client)",
+                        "type": "string",
+                        "example": "Fatou Sow"
+                    },
+                    "email": {
+                        "description": "Email (requis si nouveau client)",
+                        "type": "string",
+                        "format": "email",
+                        "example": "fatou.sow@example.com"
+                    },
+                    "telephone": {
+                        "description": "Téléphone (requis si nouveau client)",
+                        "type": "string",
+                        "example": "+221782345678"
+                    }
+                },
+                "type": "object"
+            },
+            "BlocageRequest": {
+                "required": [
+                    "motif",
+                    "duree",
+                    "unite"
+                ],
+                "properties": {
+                    "motif": {
+                        "type": "string",
+                        "example": "Suspicion de fraude"
+                    },
+                    "duree": {
+                        "type": "integer",
+                        "example": 30
+                    },
+                    "unite": {
+                        "type": "string",
+                        "enum": [
+                            "jours",
+                            "mois"
+                        ],
+                        "example": "jours"
                     }
                 },
                 "type": "object"
@@ -1033,24 +1708,29 @@
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",
-                "description": "Entrez votre token JWT obtenu via POST /api/v1/auth/login",
+                "scheme": "bearer",
                 "bearerFormat": "JWT",
-                "scheme": "bearer"
+                "description": "Entrez votre token JWT obtenu via POST /api/v1/auth/login"
             }
         }
     },
     "tags": [
         {
-            "name": "Authentification",
-            "description": "Authentification"
+            "name": " Authentification",
+            "description": " Authentification"
         },
         {
-            "name": "Comptes",
-            "description": "Comptes"
+            "name": "💳 Gestion des Comptes",
+            "description": "💳 Gestion des Comptes"
         },
         {
             "name": "Public",
             "description": "Public"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
         }
     ]
 }
