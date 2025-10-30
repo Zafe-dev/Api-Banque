@@ -40,7 +40,7 @@ RUN chown -R www-data:www-data /var/www/html
 USER www-data
 
 # ⚙️ Installer les dépendances PHP sans scripts (évite erreurs Laravel)
-RUN composer install --optimize-autoloader --no-dev --no-interaction --no-scripts
+RUN composer install --optimize-autoloader --no-interaction --no-scripts
 
 # 🗂️ Créer les répertoires nécessaires (Swagger, cache, storage)
 RUN mkdir -p storage/api-docs bootstrap/cache && \
