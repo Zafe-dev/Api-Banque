@@ -5,7 +5,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['https://seck-moustapha-sn.onrender.com', 'https://moustapha-seck.onrender.com', '*'],
+    'allowed_origins' => ['https://seck-moustapha-sn.onrender.com', 'https://moustapha-seck.onrender.com', 'http://localhost:8000', 'http://127.0.0.1:8000'],
 
     'allowed_origins_patterns' => [],
 
