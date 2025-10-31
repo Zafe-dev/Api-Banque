@@ -9,7 +9,7 @@ return [
             ],
 
             'routes' => [
-                'api' => 'swagger-api',
+                'api' => null,
                 'docs' => 'docs',
             ],
             
