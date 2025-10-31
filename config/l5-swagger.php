@@ -9,7 +9,7 @@ return [
             ],
 
             'routes' => [
-                'api' => 'api/documentation',
+                'api' => null,
                 'docs' => 'docs',
             ],
             
