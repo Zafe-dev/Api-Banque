@@ -4,6 +4,10 @@
 
 **Base URL Local :** `http://127.0.0.1:8000/api/v1`
 
+**🚀 URLs DIRECTES POUR POSTMAN :**
+- **Créer compte :** `http://127.0.0.1:8000/api/v1/comptes`
+- **Mettre à jour compte :** `http://127.0.0.1:8000/api/v1/comptes/{compte_id}`
+
 ---
 
 ## 📋 SOMMAIRE DES ENDPOINTS
@@ -480,7 +484,7 @@ Variables: compte_id = 550e8400-e29b-41d4-a716-446655440012
 
 ```
 Method: PATCH
-URL: {{base_url}}/comptes/{compte_id}
+URL: http://127.0.0.1:8000/api/v1/comptes/{compte_id}
 Headers:
   Authorization: Bearer {{token}}
   Content-Type: application/json
@@ -488,11 +492,32 @@ Headers:
 
 Body (raw JSON):
 {
-  "solde": 3000000
+  "solde": 75000,
+  "titulaire": "Test Update Postman"
 }
-
-Variables: compte_id = 550e8400-e29b-41d4-a716-446655440012
 ```
+
+**Variables :** `compte_id` = ID d'un compte existant (utilisez l'ID retourné lors de la création)
+
+**✅ RÉPONSE ATTENDUE :**
+```json
+{
+  "success": true,
+  "message": "Compte mis à jour avec succès",
+  "data": {
+    "id": "uuid-du-compte",
+    "numeroCompte": "C52321127",
+    "type": "epargne",
+    "solde": "75000.00",
+    "devise": "FCFA",
+    "statut": "actif",
+    "titulaire": "Test Update Postman",
+    "createdAt": "2025-10-30T23:23:21.000000Z"
+  }
+}
+```
+
+**⚠️ IMPORTANT :** Tous les champs sont optionnels. Seuls ceux fournis seront mis à jour.
 
 ### 🚫 **5. BLOQUER COMPTE (Épargne uniquement)**
 
@@ -536,7 +561,7 @@ Variables: compte_id = 550e8400-e29b-41d4-a716-446655440012
 
 ```
 Method: POST
-URL: {{base_url}}/comptes
+URL: http://127.0.0.1:8000/api/v1/comptes
 Headers:
   Authorization: Bearer {{token}}
   Content-Type: application/json
@@ -548,12 +573,32 @@ Body (raw JSON):
   "soldeInitial": 50000,
   "devise": "FCFA",
   "client": {
-    "titulaire": "Nouveau Client Test",
-    "email": "nouveau$(date +%s)@test.com",
+    "titulaire": "Test Postman",
+    "email": "test.postman@gmail.com",
     "telephone": "+221771234567"
   }
 }
 ```
+
+**✅ RÉPONSE ATTENDUE :**
+```json
+{
+  "success": true,
+  "message": "Compte créé avec succès",
+  "data": {
+    "id": "uuid-généré",
+    "numeroCompte": "C12345678",
+    "type": "epargne",
+    "solde": "50000.00",
+    "devise": "FCFA",
+    "statut": "actif",
+    "titulaire": "Test Postman",
+    "createdAt": "2025-10-30T23:28:00.000000Z"
+  }
+}
+```
+
+**⚠️ IMPORTANT :** Utilisez un email Gmail valide (`@gmail.com`) pour éviter les erreurs de validation DNS.
 
 ### 🗑️ **8. SUPPRIMER COMPTE (Admin seulement)**
 
@@ -612,18 +657,26 @@ TOKEN=$(curl -s -X POST "http://127.0.0.1:8000/api/v1/auth/login" \
 curl -X GET "http://127.0.0.1:8000/api/v1/comptes" \
   -H "Authorization: Bearer $TOKEN"
 
-# 3. Créer compte
+# 3. Créer compte (avec email Gmail valide)
 curl -X POST "http://127.0.0.1:8000/api/v1/comptes" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"type":"epargne","soldeInitial":100000,"devise":"FCFA","client":{"titulaire":"Test","email":"test@example.com","telephone":"+221771234567"}}'
+  -d '{"type":"epargne","soldeInitial":50000,"devise":"FCFA","client":{"titulaire":"Test Curl","email":"test.curl@gmail.com","telephone":"+221771234567"}}'
 
-# 4. Bloquer compte (remplacer ID)
+# 4. Mise à jour compte (remplacer {ID_COMPTE} par un ID réel)
+curl -X PATCH "http://127.0.0.1:8000/api/v1/comptes/{ID_COMPTE}" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"solde":75000,"titulaire":"Nouveau Nom","informationsClient":{"email":"nouveau@gmail.com"}}'
+
+# 5. Bloquer compte (remplacer {ID} par un ID réel)
 curl -X POST "http://127.0.0.1:8000/api/v1/comptes/{ID}/bloquer" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"motif":"Test","duree":7,"unite":"jours"}'
+  -d '{"motif":"Test blocage","duree":7,"unite":"jours"}'
 ```
+
+**⚠️ IMPORTANT :** Utilisez toujours des emails Gmail (`@gmail.com`) pour éviter les erreurs de validation DNS Laravel.
 
 ---
 
@@ -634,6 +687,9 @@ curl -X POST "http://127.0.0.1:8000/api/v1/comptes/{ID}/bloquer" \
 3. **Isolation données :** Les clients ne voient que leurs propres comptes actifs
 4. **Admins voient tout :** Les administrateurs voient tous les comptes actifs de tous les clients
 5. **Soft delete :** La suppression marque le compte comme `'ferme'` sans le supprimer physiquement
+6. **Validation email :** Utilisez des emails Gmail (`@gmail.com`) pour éviter les erreurs DNS
+7. **Création compte :** Nécessite un admin authentifié avec token Bearer
+8. **Mise à jour :** Tous les champs sont optionnels, seuls ceux fournis sont modifiés
 
 ---
 

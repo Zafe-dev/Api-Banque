@@ -430,6 +430,20 @@ class CompteController extends Controller
                 'data' => $request->all()
             ]);
 
+            // Mettre à jour les informations du compte
+            if ($request->has('type')) {
+                $compte->type = $request->type;
+            }
+            if ($request->has('solde')) {
+                $compte->solde = $request->solde;
+            }
+            if ($request->has('devise')) {
+                $compte->devise = $request->devise;
+            }
+            if ($request->has('statut')) {
+                $compte->statut = $request->statut;
+            }
+
             // Mettre à jour les informations du client associé
             $client = $compte->client;
             if ($request->has('titulaire')) {
@@ -451,6 +465,7 @@ class CompteController extends Controller
             }
 
             $client->save();
+            $compte->save();
 
             // Invalider le cache
             Cache::forget("compte_{$compte->id}");
