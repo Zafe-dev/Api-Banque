@@ -93,7 +93,7 @@ Route::prefix('v1')->group(function () {
         });
 
         // Comptes protégés
-        Route::middleware(['throttle:60,1'])->prefix('comptes')->group(function () {
+        Route::prefix('comptes')->group(function () {
             Route::get('/', [CompteController::class, 'index']);       // liste tous les comptes
             Route::post('/', [CompteController::class, 'store']);       // créer un compte (admin seulement)
             Route::get('/{compte}', [CompteController::class, 'show']); // détail compte

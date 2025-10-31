@@ -15,17 +15,7 @@ use App\Http\Controllers\SwaggerDocsController;
 */
 
 Route::get('/', function () {
-    return response()->json([
-        'message' => 'API Banque - Bienvenue',
-        'version' => '1.0.0',
-        'documentation' => url('/api/documentation'),
-        'endpoints' => [
-            'health' => url('/api/v1/health'),
-            'login' => url('/api/v1/auth/login'),
-            'register' => url('/api/v1/auth/register'),
-            'comptes' => url('/api/v1/comptes'),
-        ]
-    ]);
+    return redirect('/api/documentation');
 });
 
 // Route factice pour éviter l'erreur "Route [login] not defined"
