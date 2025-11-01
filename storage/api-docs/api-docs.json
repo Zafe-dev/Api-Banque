@@ -617,6 +617,88 @@
                 ]
             }
         },
+        "/api/v1/comptes/telephone/{telephone}": {
+            "get": {
+                "tags": [
+                    "💳 Gestion des Comptes"
+                ],
+                "summary": "👁️ Détail d'un compte par téléphone client",
+                "description": "Récupère les informations détaillées d'un compte spécifique à partir du numéro de téléphone du client. Les clients ne peuvent voir que leurs propres comptes.",
+                "operationId": "eacbe182c4e601d26c60eb568930ce46",
+                "parameters": [
+                    {
+                        "name": "telephone",
+                        "in": "path",
+                        "description": "Numéro de téléphone du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "+221782345678"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "✅ Détail du compte récupéré"
+                    },
+                    "401": {
+                        "description": "❌ Non authentifié"
+                    },
+                    "403": {
+                        "description": "🚫 Accès refusé"
+                    },
+                    "404": {
+                        "description": "🔍 Compte non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/comptes/numero/{numero}": {
+            "get": {
+                "tags": [
+                    "💳 Gestion des Comptes"
+                ],
+                "summary": "👁️ Détail d'un compte par numéro",
+                "description": "Récupère les informations détaillées d'un compte spécifique à partir de son numéro. Les clients ne peuvent voir que leurs propres comptes.",
+                "operationId": "9df4b543f52028833ed680992a7b0681",
+                "parameters": [
+                    {
+                        "name": "numero",
+                        "in": "path",
+                        "description": "Numéro du compte",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "C00123456"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "✅ Détail du compte récupéré"
+                    },
+                    "401": {
+                        "description": "❌ Non authentifié"
+                    },
+                    "403": {
+                        "description": "🚫 Accès refusé"
+                    },
+                    "404": {
+                        "description": "🔍 Compte non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/comptes/{compte}": {
             "get": {
                 "tags": [

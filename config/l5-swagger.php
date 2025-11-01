@@ -5,7 +5,9 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'Nouveau Titre API',
+                'title' => 'API Bancaire - Gestion des Comptes & Clients',
+                'description' => 'API REST complete pour la gestion bancaire - Comptes, Clients, Authentification',
+                'version' => '1.0.0',
             ],
 
             'routes' => [

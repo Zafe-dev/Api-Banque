@@ -25,21 +25,24 @@ class AuthenticateWithRole
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'UNAUTHENTICATED',
-                    'message' => 'Non authentifié'
+                    'code' => 'AUTHENTICATION_REQUIRED',
+                    'message' => 'Authentification requise. Veuillez vous connecter pour accéder à cette ressource.'
                 ]
             ], 401);
         }
 
         $user = Auth::user();
 
-        // Si un rôle spécifique est requis, vérifier
+        // Si un rôle spécifique est requis, vérifier avec message explicite
         if ($role && ($user->role ?? null) !== $role) {
+            $requiredRole = ucfirst($role);
+            $userRole = ucfirst($user->role ?? 'inconnu');
+
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'FORBIDDEN',
-                    'message' => 'Accès refusé pour ce rôle'
+                    'code' => 'INSUFFICIENT_PERMISSIONS',
+                    'message' => "Permissions insuffisantes. Cette action nécessite le rôle '{$requiredRole}' mais vous avez le rôle '{$userRole}'."
                 ]
             ], 403);
         }

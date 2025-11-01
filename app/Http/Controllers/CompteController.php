@@ -118,8 +118,8 @@ class CompteController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'UNAUTHENTICATED',
-                    'message' => 'Utilisateur non authentifié'
+                    'code' => 'AUTHENTICATION_REQUIRED',
+                    'message' => 'Authentification requise. Veuillez vous connecter pour accéder à la liste des comptes.'
                 ]
             ], 401);
         }
@@ -131,7 +131,7 @@ class CompteController extends Controller
             'role' => $user->role ?? 'no_role',
         ]);
 
-        $query = Compte::with('client:id,titulaire');
+        $query = Compte::with('client:id,titulaire,telephone');
 
         // Vérifier si c'est un admin (User model) ou un client (Client model)
         $isAdmin = $user instanceof \App\Models\Admin && ($user->role === 'admin');
@@ -149,8 +149,8 @@ class CompteController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'ACCESS_DENIED',
-                    'message' => 'Type d\'utilisateur non autorisé'
+                    'code' => 'INVALID_USER_TYPE',
+                    'message' => 'Type d\'utilisateur non reconnu. Seuls les administrateurs et clients peuvent accéder aux comptes.'
                 ]
             ], 403);
         }
@@ -181,6 +181,160 @@ class CompteController extends Controller
         ], 500);
     }
 }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/comptes/telephone/{telephone}",
+     *     tags={"💳 Gestion des Comptes"},
+     *     summary="👁️ Détail d'un compte par téléphone client",
+     *     description="Récupère les informations détaillées d'un compte spécifique à partir du numéro de téléphone du client. Les clients ne peuvent voir que leurs propres comptes.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="telephone",
+     *         in="path",
+     *         required=true,
+     *         description="Numéro de téléphone du client",
+     *         @OA\Schema(type="string", example="+221782345678")
+     *     ),
+     *     @OA\Response(response=200, description="✅ Détail du compte récupéré"),
+     *     @OA\Response(response=401, description="❌ Non authentifié"),
+     *     @OA\Response(response=403, description="🚫 Accès refusé"),
+     *     @OA\Response(response=404, description="🔍 Compte non trouvé")
+     * )
+     */
+    public function showByTelephone(string $telephone): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in showByTelephone method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'UNAUTHENTICATED', 'message' => 'Utilisateur non authentifié']
+                ], 401);
+            }
+
+            // Rechercher le client par numéro de téléphone
+            $client = \App\Models\Client::where('telephone', $telephone)->first();
+
+            if (!$client) {
+                Log::warning('Client not found by telephone', ['telephone' => $telephone, 'user_id' => $user->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'NOT_FOUND', 'message' => 'Client non trouvé avec ce numéro de téléphone']
+                ], 404);
+            }
+
+            // Vérifier les permissions : clients ne peuvent voir que leurs comptes
+            if (($user->role ?? null) === 'client' && $client->id !== $user->id) {
+                Log::warning('Client accessing unauthorized compte by telephone', ['user_id' => $user->id, 'client_id' => $client->id, 'telephone' => $telephone]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Vous n\'avez pas accès aux comptes de ce client']
+                ], 403);
+            }
+
+            // Récupérer les comptes du client
+            $comptes = Compte::where('client_id', $client->id)
+                            ->with('client:id,titulaire,telephone')
+                            ->get();
+
+            if ($comptes->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'NOT_FOUND', 'message' => 'Aucun compte trouvé pour ce numéro de téléphone']
+                ], 404);
+            }
+
+            // Formater les données des comptes
+            $formattedComptes = $comptes->map(function ($compte) {
+                return $this->formatCompteData($compte);
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $formattedComptes,
+                'total' => $comptes->count()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@showByTelephone', ['telephone' => $telephone, 'message' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'INTERNAL_ERROR', 'message' => 'Une erreur interne s\'est produite']
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/comptes/numero/{numero}",
+     *     tags={"💳 Gestion des Comptes"},
+     *     summary="👁️ Détail d'un compte par numéro",
+     *     description="Récupère les informations détaillées d'un compte spécifique à partir de son numéro. Les clients ne peuvent voir que leurs propres comptes.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="numero",
+     *         in="path",
+     *         required=true,
+     *         description="Numéro du compte",
+     *         @OA\Schema(type="string", example="C00123456")
+     *     ),
+     *     @OA\Response(response=200, description="✅ Détail du compte récupéré"),
+     *     @OA\Response(response=401, description="❌ Non authentifié"),
+     *     @OA\Response(response=403, description="🚫 Accès refusé"),
+     *     @OA\Response(response=404, description="🔍 Compte non trouvé")
+     * )
+     */
+    public function showByNumero(string $numero): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                Log::error('No authenticated user in showByNumero method');
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'AUTHENTICATION_REQUIRED', 'message' => 'Authentification requise pour consulter les détails d\'un compte.']
+                ], 401);
+            }
+
+            // Rechercher le compte par numéro
+            $compte = Compte::where('numero_compte', $numero)->first();
+
+            if (!$compte) {
+                Log::warning('Compte not found by numero', ['numero' => $numero, 'user_id' => $user->id]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'NOT_FOUND', 'message' => 'Compte non trouvé']
+                ], 404);
+            }
+
+            // Vérifier les permissions : clients ne peuvent voir que leurs comptes
+            if (($user->role ?? null) === 'client' && $compte->client_id !== $user->id) {
+                Log::warning('Client accessing unauthorized compte by numero', ['user_id' => $user->id, 'compte_id' => $compte->id, 'numero' => $numero]);
+                return response()->json([
+                    'success' => false,
+                    'error' => ['code' => 'ACCESS_DENIED', 'message' => 'Accès refusé. Vous ne pouvez consulter que vos propres comptes.']
+                ], 403);
+            }
+
+            $cacheKey = "compte_numero_{$numero}";
+            $compteData = Cache::remember($cacheKey, 1800, fn() => $compte->load('client:id,titulaire,telephone'));
+
+            return response()->json([
+                'success' => true,
+                'data' => $this->formatCompteData($compteData)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in CompteController@showByNumero', ['numero' => $numero, 'message' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'error' => ['code' => 'INTERNAL_ERROR', 'message' => 'Une erreur interne s\'est produite']
+            ], 500);
+        }
+    }
 
     /**
      * @OA\Get(
@@ -224,7 +378,7 @@ class CompteController extends Controller
             }
 
             $cacheKey = "compte_{$compte->id}";
-            $compteData = Cache::remember($cacheKey, 1800, fn() => $compte->load('client:id,titulaire'));
+            $compteData = Cache::remember($cacheKey, 1800, fn() => $compte->load('client:id,titulaire,telephone'));
 
             return response()->json([
                 'success' => true,
@@ -273,8 +427,8 @@ class CompteController extends Controller
                 return response()->json([
                     'success' => false,
                     'error' => [
-                        'code' => 'UNAUTHENTICATED',
-                        'message' => 'Utilisateur non authentifié'
+                        'code' => 'AUTHENTICATION_REQUIRED',
+                        'message' => 'Authentification requise pour créer un compte bancaire.'
                     ]
                 ], 401);
             }
@@ -286,8 +440,8 @@ class CompteController extends Controller
                 return response()->json([
                     'success' => false,
                     'error' => [
-                        'code' => 'ACCESS_DENIED',
-                        'message' => 'Accès refusé. Seul un administrateur peut créer un compte.'
+                        'code' => 'ADMIN_ONLY_OPERATION',
+                        'message' => 'Opération réservée aux administrateurs. Seuls les administrateurs peuvent créer des comptes bancaires.'
                     ]
                 ], 403);
             }
@@ -311,7 +465,7 @@ class CompteController extends Controller
 
             Cache::forget("compte_{$compte->id}");
 
-            $formattedData = $this->formatCompteData($compte->load('client:id,titulaire'));
+            $formattedData = $this->formatCompteData($compte->load('client:id,titulaire,telephone'));
 
             return response()->json([
                 'success' => true,
@@ -360,6 +514,7 @@ class CompteController extends Controller
             'devise' => $compte->devise,
             'statut' => $compte->statut,
             'titulaire' => $compte->client->titulaire ?? null,
+            'telephone' => $compte->client->telephone ?? null,
             'createdAt' => $compte->created_at->format('Y-m-d H:i:s')
         ];
     }
@@ -473,7 +628,7 @@ class CompteController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Compte mis à jour avec succès',
-                'data' => $this->formatCompteData($compte->load('client:id,titulaire'))
+                'data' => $this->formatCompteData($compte->load('client:id,titulaire,telephone'))
             ]);
 
         } catch (\Exception $e) {
@@ -633,7 +788,7 @@ class CompteController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Compte bloqué avec succès',
-                'data' => $this->formatCompteData($compte->load('client:id,titulaire'))
+                'data' => $this->formatCompteData($compte->load('client:id,titulaire,telephone'))
             ]);
 
         } catch (\Exception $e) {
@@ -719,7 +874,7 @@ class CompteController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Compte débloqué avec succès',
-                'data' => $this->formatCompteData($compte->load('client:id,titulaire'))
+                'data' => $this->formatCompteData($compte->load('client:id,titulaire,telephone'))
             ]);
 
         } catch (\Exception $e) {
