@@ -56,7 +56,7 @@ cat .env
 
 echo "✅ Fichier .env créé"
 
-# ⚠️ RESET COMPLET DE LA BASE (car structure changée avec UUID)
+# ⚠️ RESET COMPLET DE LA BASE (car structure changée avec UUID et nouvelles fonctionnalités)
 echo "🔄 Reset complet de la base de données..."
 php artisan migrate:fresh --force --no-interaction || echo "⚠️ Reset échoué, continuation..."
 
@@ -64,9 +64,9 @@ php artisan migrate:fresh --force --no-interaction || echo "⚠️ Reset échou�
 echo "🔄 Exécution des migrations..."
 php artisan migrate --force --no-interaction || echo "⚠️ Migrations échouées, continuation..."
 
-# Installer Passport AVANT tout
+# Installer Passport AVANT tout (avec UUIDs support)
 echo "🔐 Installation de Passport..."
-php artisan passport:install --force --no-interaction || echo "⚠️ Passport install échoué, continuation..."
+php artisan passport:install --uuids --force --no-interaction || echo "⚠️ Passport install échoué, continuation..."
 
 # Générer les clés Passport AVANT tout le reste (seulement si elles n'existent pas)
 echo "🔐 Vérification des clés Passport..."
